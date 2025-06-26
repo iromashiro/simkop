@@ -4,41 +4,41 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Security headers middleware for enhanced protection
- */
 class SecurityHeadersMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    /**
+     * Handle an incoming request.
+     */
+    public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
 
+        // Security headers from config
+        $headers = config('security.headers', []);
+
+        foreach ($headers as $header => $value) {
+            $response->headers->set($header, $value);
+        }
+
         // Content Security Policy
-        $csp = [
-            "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
-            "img-src 'self' data: https:",
-            "font-src 'self' https://fonts.gstatic.com",
-            "connect-src 'self'",
-            "frame-ancestors 'none'",
-            "base-uri 'self'",
-            "form-action 'self'",
-        ];
+        if (config('security.csp.enabled', true)) {
+            $cspDirectives = config('security.csp.directives', []);
+            $csp = collect($cspDirectives)
+                ->map(fn($value, $key) => "{$key} {$value}")
+                ->implode('; ');
 
-        $response->headers->set('Content-Security-Policy', implode('; ', $csp));
+            $headerName = config('security.csp.report_only', false)
+                ? 'Content-Security-Policy-Report-Only'
+                : 'Content-Security-Policy';
 
-        // Security headers
-        $response->headers->set('X-Frame-Options', 'DENY');
-        $response->headers->set('X-Content-Type-Options', 'nosniff');
-        $response->headers->set('X-XSS-Protection', '1; mode=block');
-        $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+            $response->headers->set($headerName, $csp);
+        }
 
         // HSTS for HTTPS
-        if ($request->isSecure()) {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+        if ($request->secure()) {
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
         return $response;

@@ -1,6 +1,5 @@
 <?php
-// bootstrap/app.php - Laravel 11+ Configuration
-
+// bootstrap/app.php
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,91 +12,68 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // SECURITY: Global middleware for web routes
+        // Global middleware
         $middleware->web(append: [
             \App\Http\Middleware\SecurityHeadersMiddleware::class,
-            \App\Http\Middleware\ResolveTenantMiddleware::class,
         ]);
 
-        // SECURITY: API middleware
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
-
-        // SECURITY: Rate limiting aliases
-        $middleware->alias([
-            'throttle.login' => \Illuminate\Routing\Middleware\ThrottleRequests::class . ':5,1',
-            'throttle.api' => \Illuminate\Routing\Middleware\ThrottleRequests::class . ':60,1',
-            'throttle.financial' => \Illuminate\Routing\Middleware\ThrottleRequests::class . ':30,1',
-            'tenant.access' => \App\Http\Middleware\CheckCooperativeAccess::class,
-            'tenant.auth' => \App\Http\Middleware\TenantAwareAuthMiddleware::class,
-            'audit.log' => \App\Http\Middleware\AuditLogMiddleware::class,
-        ]);
-
-        // SECURITY: Group middleware
-        $middleware->group('tenant', [
-            'throttle:60,1',
-            \App\Http\Middleware\ResolveTenantMiddleware::class,
-            \App\Http\Middleware\CheckCooperativeAccess::class,
-            \App\Http\Middleware\AuditLogMiddleware::class,
-        ]);
-
-        $middleware->group('financial', [
-            'auth',
-            'tenant',
-            'throttle.financial',
-            \App\Http\Middleware\ValidateFinancialAccess::class,
-        ]);
-
-        // SECURITY: Priority middleware (runs first)
-        $middleware->priority([
-            \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
-            \Illuminate\Cookie\Middleware\EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
-            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+        $middleware->api(append: [
             \App\Http\Middleware\SecurityHeadersMiddleware::class,
-            \App\Http\Middleware\ResolveTenantMiddleware::class,
-            \Illuminate\Routing\Middleware\ThrottleRequests::class,
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
+
+        // Middleware aliases
+        $middleware->alias([
+            'cooperative.access' => \App\Http\Middleware\CheckCooperativeAccess::class,
+            'audit.log' => \App\Http\Middleware\AuditLogMiddleware::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'permission' => \App\Http\Middleware\PermissionMiddleware::class,
+            'security.headers' => \App\Http\Middleware\SecurityHeadersMiddleware::class,
+        ]);
+
+        // Middleware groups
+        $middleware->group('tenant', [
+            'cooperative.access',
+            'audit.log',
+        ]);
+
+        $middleware->group('api.secure', [
+            'auth:sanctum',
+            'cooperative.access',
+            'audit.log',
+            'throttle:api',
+        ]);
+
+        // Rate limiting
+        $middleware->throttle([
+            'api' => '60:1',
+            'login' => '5:1',
+            'global' => '1000:1',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // SECURITY: Enhanced exception handling
-        $exceptions->render(function (\App\Domain\Financial\Exceptions\UnbalancedEntryException $e) {
-            return response()->json([
-                'error' => 'Financial transaction error',
-                'message' => 'Journal entry must be balanced',
-                'code' => 'UNBALANCED_ENTRY'
-            ], 422);
+        // Custom exception handling
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Unauthenticated'], 401);
+            }
+            return redirect()->route('login');
         });
 
-        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e) {
-            \Log::warning('Authorization failed', [
-                'user_id' => auth()->id(),
-                'ip' => request()->ip(),
-                'url' => request()->fullUrl(),
-                'message' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'error' => 'Access denied',
-                'message' => 'You do not have permission to perform this action'
-            ], 403);
+        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+            return redirect()->back()->withErrors(['error' => 'Access denied']);
         });
 
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException $e) {
-            \Log::warning('Rate limit exceeded', [
-                'ip' => request()->ip(),
-                'user_id' => auth()->id(),
-                'url' => request()->fullUrl(),
-            ]);
-
-            return response()->json([
-                'error' => 'Too many requests',
-                'message' => 'Please slow down and try again later'
-            ], 429);
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
         });
     })
     ->create();
