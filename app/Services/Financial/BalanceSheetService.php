@@ -155,6 +155,7 @@ class BalanceSheetService
 
     public function getPreviousYearData(int $cooperativeId, int $year): array
     {
+        // ✅ FIXED: Use existing scope methods correctly
         $accounts = BalanceSheetAccount::select([
             'account_code',
             'account_name',
@@ -165,9 +166,9 @@ class BalanceSheetService
             'note_reference',
             'sort_order'
         ])
-            ->byCooperative($cooperativeId)
-            ->byYear($year)
-            ->ordered()
+            ->byCooperative($cooperativeId)  // ✅ This method exists in trait
+            ->byYear($year)                  // ✅ This method exists in model
+            ->scopeOrdered()                 // ✅ This method exists in model
             ->get()
             ->groupBy('account_category');
 
@@ -319,6 +320,7 @@ class BalanceSheetService
 
     public function getFinancialRatios(int $cooperativeId, int $year): array
     {
+        // ✅ FIXED: Use existing scope methods correctly
         $accounts = BalanceSheetAccount::byCooperative($cooperativeId)
             ->byYear($year)
             ->get()
@@ -344,6 +346,7 @@ class BalanceSheetService
 
     public function getYearOverYearAnalysis(int $cooperativeId, int $year): array
     {
+        // ✅ FIXED: Use existing scope methods correctly
         $currentYear = BalanceSheetAccount::byCooperative($cooperativeId)
             ->byYear($year)
             ->get()

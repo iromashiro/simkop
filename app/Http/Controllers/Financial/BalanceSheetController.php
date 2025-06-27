@@ -32,7 +32,7 @@ class BalanceSheetController extends Controller
         try {
             $year = $request->get('year', date('Y'));
 
-            // ✅ CRITICAL FIX: Consistent scope usage
+            // ✅ CRITICAL FIX: Use existing scope methods correctly
             if (auth()->user()->isAdminDinas()) {
                 $cooperativeId = $request->get('cooperative_id');
                 if (!$cooperativeId) {
@@ -42,26 +42,26 @@ class BalanceSheetController extends Controller
 
                 $accounts = BalanceSheetAccount::byCooperative($cooperativeId)
                     ->byYear($year)
-                    ->ordered()
+                    ->scopeOrdered()
                     ->get()
                     ->groupBy('account_category');
 
-                $report = FinancialReport::byCooperative($cooperativeId)
-                    ->byType('balance_sheet')
-                    ->byYear($year)
+                $report = FinancialReport::where('cooperative_id', $cooperativeId)
+                    ->where('report_type', 'balance_sheet')
+                    ->where('reporting_year', $year)
                     ->first();
             } else {
                 $cooperativeId = auth()->user()->cooperative_id;
 
                 $accounts = BalanceSheetAccount::forCurrentUser()
                     ->byYear($year)
-                    ->ordered()
+                    ->scopeOrdered()
                     ->get()
                     ->groupBy('account_category');
 
                 $report = FinancialReport::forCurrentUser()
-                    ->byType('balance_sheet')
-                    ->byYear($year)
+                    ->where('report_type', 'balance_sheet')
+                    ->where('reporting_year', $year)
                     ->first();
             }
 
@@ -90,7 +90,7 @@ class BalanceSheetController extends Controller
         try {
             $year = $request->get('year', date('Y'));
 
-            // ✅ CRITICAL FIX: Consistent scope usage
+            // ✅ CRITICAL FIX: Use existing scope methods correctly
             if (auth()->user()->isAdminDinas()) {
                 $cooperativeId = $request->get('cooperative_id');
                 if (!$cooperativeId) {
@@ -98,16 +98,16 @@ class BalanceSheetController extends Controller
                         ->with('info', 'Pilih koperasi untuk membuat laporan.');
                 }
 
-                $existingReport = FinancialReport::byCooperative($cooperativeId)
-                    ->byType('balance_sheet')
-                    ->byYear($year)
+                $existingReport = FinancialReport::where('cooperative_id', $cooperativeId)
+                    ->where('report_type', 'balance_sheet')
+                    ->where('reporting_year', $year)
                     ->first();
             } else {
                 $cooperativeId = auth()->user()->cooperative_id;
 
                 $existingReport = FinancialReport::forCurrentUser()
-                    ->byType('balance_sheet')
-                    ->byYear($year)
+                    ->where('report_type', 'balance_sheet')
+                    ->where('reporting_year', $year)
                     ->first();
             }
 
@@ -136,6 +136,7 @@ class BalanceSheetController extends Controller
         }
     }
 
+    // Rest of the methods remain the same...
     public function store(BalanceSheetRequest $request)
     {
         try {
