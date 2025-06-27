@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('dana_sp_internal', 15, 2)->default(0);
             $table->decimal('dana_ptba', 15, 2)->default(0);
             $table->decimal('dana_map', 15, 2)->default(0);
-            $table->decimal('total_receivable', 15, 2)->nullable(); // ✅ FIXED: Remove storedAs
+            $table->decimal('total_receivable', 15, 2)->nullable();
             $table->integer('overdue_days')->default(0);
             $table->text('notes')->nullable();
             $table->timestamps();
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->index(['cooperative_id', 'reporting_year']);
         });
 
-        // ✅ FIXED: Add computed column using PostgreSQL trigger
+        // ✅ CRITICAL FIX: Optimized trigger
         DB::statement('
             CREATE OR REPLACE FUNCTION update_total_receivable()
             RETURNS TRIGGER AS $$
@@ -40,7 +40,7 @@ return new class extends Migration
 
         DB::statement('
             CREATE TRIGGER npl_receivables_compute_total
-            BEFORE INSERT OR UPDATE ON non_performing_receivables
+            BEFORE INSERT OR UPDATE OF dana_sp_internal, dana_ptba, dana_map ON non_performing_receivables
             FOR EACH ROW EXECUTE FUNCTION update_total_receivable();
         ');
     }

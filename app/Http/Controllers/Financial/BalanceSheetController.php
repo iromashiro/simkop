@@ -30,25 +30,40 @@ class BalanceSheetController extends Controller
     public function index(Request $request)
     {
         try {
-            $cooperativeId = auth()->user()->isAdminDinas()
-                ? $request->get('cooperative_id', auth()->user()->cooperative_id)
-                : auth()->user()->cooperative_id;
-
             $year = $request->get('year', date('Y'));
 
-            // ✅ ENHANCED: Use forCurrentUser scope
-            $accounts = BalanceSheetAccount::forCurrentUser()
-                ->byCooperative($cooperativeId)
-                ->byYear($year)
-                ->ordered()
-                ->get()
-                ->groupBy('account_category');
+            // ✅ CRITICAL FIX: Consistent scope usage
+            if (auth()->user()->isAdminDinas()) {
+                $cooperativeId = $request->get('cooperative_id');
+                if (!$cooperativeId) {
+                    return redirect()->route('admin.cooperatives.index')
+                        ->with('info', 'Pilih koperasi untuk melihat laporan.');
+                }
 
-            $report = FinancialReport::forCurrentUser()
-                ->byCooperative($cooperativeId)
-                ->byType('balance_sheet')
-                ->byYear($year)
-                ->first();
+                $accounts = BalanceSheetAccount::byCooperative($cooperativeId)
+                    ->byYear($year)
+                    ->ordered()
+                    ->get()
+                    ->groupBy('account_category');
+
+                $report = FinancialReport::byCooperative($cooperativeId)
+                    ->byType('balance_sheet')
+                    ->byYear($year)
+                    ->first();
+            } else {
+                $cooperativeId = auth()->user()->cooperative_id;
+
+                $accounts = BalanceSheetAccount::forCurrentUser()
+                    ->byYear($year)
+                    ->ordered()
+                    ->get()
+                    ->groupBy('account_category');
+
+                $report = FinancialReport::forCurrentUser()
+                    ->byType('balance_sheet')
+                    ->byYear($year)
+                    ->first();
+            }
 
             $previousYearData = $this->balanceSheetService->getPreviousYearData($cooperativeId, $year - 1);
 
@@ -62,8 +77,6 @@ class BalanceSheetController extends Controller
         } catch (\Exception $e) {
             Log::error('Error loading balance sheet index', [
                 'user_id' => auth()->id(),
-                'cooperative_id' => $cooperativeId ?? null,
-                'year' => $year ?? null,
                 'error' => $e->getMessage()
             ]);
 
@@ -75,18 +88,28 @@ class BalanceSheetController extends Controller
     public function create(Request $request)
     {
         try {
-            $cooperativeId = auth()->user()->isAdminDinas()
-                ? $request->get('cooperative_id', auth()->user()->cooperative_id)
-                : auth()->user()->cooperative_id;
-
             $year = $request->get('year', date('Y'));
 
-            // Check if report already exists
-            $existingReport = FinancialReport::forCurrentUser()
-                ->byCooperative($cooperativeId)
-                ->byType('balance_sheet')
-                ->byYear($year)
-                ->first();
+            // ✅ CRITICAL FIX: Consistent scope usage
+            if (auth()->user()->isAdminDinas()) {
+                $cooperativeId = $request->get('cooperative_id');
+                if (!$cooperativeId) {
+                    return redirect()->route('admin.cooperatives.index')
+                        ->with('info', 'Pilih koperasi untuk membuat laporan.');
+                }
+
+                $existingReport = FinancialReport::byCooperative($cooperativeId)
+                    ->byType('balance_sheet')
+                    ->byYear($year)
+                    ->first();
+            } else {
+                $cooperativeId = auth()->user()->cooperative_id;
+
+                $existingReport = FinancialReport::forCurrentUser()
+                    ->byType('balance_sheet')
+                    ->byYear($year)
+                    ->first();
+            }
 
             if ($existingReport && !$existingReport->canBeEdited()) {
                 return redirect()->route('financial.balance-sheet.index')
@@ -105,8 +128,6 @@ class BalanceSheetController extends Controller
         } catch (\Exception $e) {
             Log::error('Error loading balance sheet create form', [
                 'user_id' => auth()->id(),
-                'cooperative_id' => $cooperativeId ?? null,
-                'year' => $year ?? null,
                 'error' => $e->getMessage()
             ]);
 
@@ -128,10 +149,8 @@ class BalanceSheetController extends Controller
                 'year' => $report->reporting_year
             ])->with('success', 'Laporan Posisi Keuangan berhasil disimpan.');
         } catch (ValidationException $e) {
-            // ✅ ENHANCED: Handle validation errors properly
             return back()->withErrors($e->errors())->withInput();
         } catch (QueryException $e) {
-            // ✅ ENHANCED: Handle database errors
             Log::error('Database error in balance sheet creation', [
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
@@ -142,7 +161,6 @@ class BalanceSheetController extends Controller
             return back()->withInput()
                 ->with('error', 'Terjadi kesalahan database. Silakan coba lagi atau hubungi administrator.');
         } catch (\Exception $e) {
-            // ✅ ENHANCED: Handle unexpected errors
             Log::error('Unexpected error in balance sheet creation', [
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
@@ -158,11 +176,11 @@ class BalanceSheetController extends Controller
     public function show(FinancialReport $report)
     {
         try {
-            // ✅ ENHANCED: Use trait method for access check
             if (!$report->canBeAccessedByCurrentUser()) {
                 abort(403, 'Anda tidak memiliki akses ke laporan ini.');
             }
 
+            // ✅ CRITICAL FIX: Use explicit cooperative filter for show method
             $accounts = BalanceSheetAccount::byCooperative($report->cooperative_id)
                 ->byYear($report->reporting_year)
                 ->ordered()
@@ -206,6 +224,7 @@ class BalanceSheetController extends Controller
                     ->with('error', 'Laporan tidak dapat diedit.');
             }
 
+            // ✅ CRITICAL FIX: Use explicit cooperative filter for edit method
             $accounts = BalanceSheetAccount::byCooperative($report->cooperative_id)
                 ->byYear($report->reporting_year)
                 ->ordered()

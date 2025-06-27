@@ -19,14 +19,14 @@ return new class extends Migration
             $table->decimal('simpanan_wajib', 15, 2)->default(0);
             $table->decimal('simpanan_khusus', 15, 2)->default(0);
             $table->decimal('simpanan_sukarela', 15, 2)->default(0);
-            $table->decimal('total_simpanan', 15, 2)->nullable(); // ✅ FIXED: Remove storedAs
+            $table->decimal('total_simpanan', 15, 2)->nullable();
             $table->timestamps();
 
             $table->unique(['cooperative_id', 'member_name', 'reporting_year']);
             $table->index(['cooperative_id', 'reporting_year']);
         });
 
-        // ✅ FIXED: Add computed column using PostgreSQL trigger
+        // ✅ CRITICAL FIX: Optimized trigger
         DB::statement('
             CREATE OR REPLACE FUNCTION update_total_simpanan()
             RETURNS TRIGGER AS $$
@@ -39,7 +39,7 @@ return new class extends Migration
 
         DB::statement('
             CREATE TRIGGER member_savings_compute_total
-            BEFORE INSERT OR UPDATE ON member_savings
+            BEFORE INSERT OR UPDATE OF simpanan_pokok, simpanan_wajib, simpanan_khusus, simpanan_sukarela ON member_savings
             FOR EACH ROW EXECUTE FUNCTION update_total_simpanan();
         ');
     }

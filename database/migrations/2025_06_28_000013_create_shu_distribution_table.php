@@ -17,7 +17,7 @@ return new class extends Migration
             $table->integer('reporting_year');
             $table->decimal('jasa_simpanan', 15, 2)->default(0);
             $table->decimal('jasa_pinjaman', 15, 2)->default(0);
-            $table->decimal('total_shu', 15, 2)->nullable(); // ✅ FIXED: Remove storedAs
+            $table->decimal('total_shu', 15, 2)->nullable();
             $table->decimal('simpanan_participation', 15, 2)->default(0);
             $table->decimal('pinjaman_participation', 15, 2)->default(0);
             $table->timestamps();
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->index(['cooperative_id', 'reporting_year']);
         });
 
-        // ✅ FIXED: Add computed column using PostgreSQL trigger
+        // ✅ CRITICAL FIX: Optimized trigger
         DB::statement('
             CREATE OR REPLACE FUNCTION update_total_shu()
             RETURNS TRIGGER AS $$
@@ -39,7 +39,7 @@ return new class extends Migration
 
         DB::statement('
             CREATE TRIGGER shu_distribution_compute_total
-            BEFORE INSERT OR UPDATE ON shu_distribution
+            BEFORE INSERT OR UPDATE OF jasa_simpanan, jasa_pinjaman ON shu_distribution
             FOR EACH ROW EXECUTE FUNCTION update_total_shu();
         ');
     }

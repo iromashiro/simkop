@@ -15,8 +15,8 @@ class BalanceSheetService
     {
         return DB::transaction(function () use ($data, $createdBy) {
             try {
-                // ✅ ENHANCED: Validate data before processing
-                $this->validateBalanceSheetData($data);
+                // ✅ CRITICAL FIX: Remove double validation - trust Request validation
+                $this->validateBusinessLogic($data);
 
                 // Create or update financial report
                 $report = FinancialReport::updateOrCreate(
@@ -60,8 +60,8 @@ class BalanceSheetService
     {
         return DB::transaction(function () use ($report, $data) {
             try {
-                // ✅ ENHANCED: Validate data before processing
-                $this->validateBalanceSheetData($data);
+                // ✅ CRITICAL FIX: Remove double validation - trust Request validation
+                $this->validateBusinessLogic($data);
 
                 // Update report
                 $report->update([
@@ -92,46 +92,16 @@ class BalanceSheetService
         });
     }
 
-    // ✅ ADDED: Data validation method
-    private function validateBalanceSheetData(array $data): void
+    // ✅ CRITICAL FIX: Only validate business logic, not form validation
+    private function validateBusinessLogic(array $data): void
     {
-        // Check balance equation
-        $validation = $this->validateBalanceEquation($data['accounts']);
-        if (!$validation['is_balanced']) {
-            throw ValidationException::withMessages([
-                'balance_equation' => 'Persamaan neraca tidak seimbang. Selisih: Rp ' .
-                    number_format(abs($validation['difference']), 2, ',', '.')
-            ]);
-        }
-
-        // Check for duplicate account codes
-        $this->validateUniqueAccountCodes($data['accounts']);
-
-        // Check for reasonable amounts
+        // Only validate business rules that can't be validated in Request
         $this->validateReasonableAmounts($data['accounts']);
+        // Remove balance equation validation (already validated in Request)
+        // Remove unique account codes validation (already validated in Request)
     }
 
-    // ✅ ADDED: Unique account codes validation
-    private function validateUniqueAccountCodes(array $accounts): void
-    {
-        $allCodes = [];
-
-        foreach (['assets', 'liabilities', 'equity'] as $category) {
-            if (isset($accounts[$category])) {
-                foreach ($accounts[$category] as $account) {
-                    $code = $account['account_code'] ?? '';
-                    if (in_array($code, $allCodes)) {
-                        throw ValidationException::withMessages([
-                            'account_codes' => "Kode akun {$code} sudah digunakan."
-                        ]);
-                    }
-                    $allCodes[] = $code;
-                }
-            }
-        }
-    }
-
-    // ✅ ADDED: Reasonable amounts validation
+    // Keep reasonable amounts validation as business logic
     private function validateReasonableAmounts(array $accounts): void
     {
         foreach (['assets', 'liabilities', 'equity'] as $category) {
@@ -161,7 +131,7 @@ class BalanceSheetService
                         'reporting_year' => $reportingYear,
                         'account_code' => $accountData['account_code'],
                         'account_name' => $accountData['account_name'],
-                        'account_category' => $this->mapCategory($category), // ✅ FIXED: Use helper method
+                        'account_category' => $this->mapCategory($category),
                         'account_subcategory' => $accountData['account_subcategory'],
                         'current_year_amount' => $accountData['current_year_amount'],
                         'previous_year_amount' => $accountData['previous_year_amount'] ?? 0,
@@ -173,7 +143,6 @@ class BalanceSheetService
         }
     }
 
-    // ✅ FIXED: Category mapping helper
     private function mapCategory(string $category): string
     {
         return match ($category) {
@@ -186,7 +155,6 @@ class BalanceSheetService
 
     public function getPreviousYearData(int $cooperativeId, int $year): array
     {
-        // ✅ ENHANCED: Add query optimization
         $accounts = BalanceSheetAccount::select([
             'account_code',
             'account_name',
@@ -328,6 +296,7 @@ class BalanceSheetService
         ];
     }
 
+    // Keep these methods for backward compatibility and analysis features
     public function validateBalanceEquation(array $accounts): array
     {
         $totalAssets = collect($accounts['assets'] ?? [])->sum('current_year_amount');
