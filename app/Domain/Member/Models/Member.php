@@ -11,6 +11,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 use App\Domain\Loan\Models\LoanAccount;
 use App\Domain\Savings\Models\SavingsAccount;
+use App\Domain\Auth\Models\User;
+use App\Domain\Cooperative\Models\Cooperative;
 
 /**
  * Member model for cooperative member management
@@ -214,5 +216,83 @@ class Member extends TenantModel
     public function getDisplayNameAttribute(): string
     {
         return "{$this->member_number} - {$this->name}";
+    }
+
+    public function cooperative()
+    {
+        return $this->belongsTo(Cooperative::class);
+    }
+
+    /**
+     * Get member's user account
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get member loan accounts
+     */
+    public function loanAccounts()
+    {
+        return $this->hasMany(LoanAccount::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get member savings accounts
+     */
+    public function savingsAccounts()
+    {
+        return $this->hasMany(SavingsAccount::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get active loan accounts
+     */
+    public function activeLoanAccounts()
+    {
+        return $this->loanAccounts()->whereIn('status', ['approved', 'disbursed', 'active']);
+    }
+
+    /**
+     * Get active savings accounts
+     */
+    public function activeSavingsAccounts()
+    {
+        return $this->savingsAccounts()->where('status', 'active');
+    }
+
+    /**
+     * Get total savings balance
+     */
+    public function getTotalSavingsBalance(): float
+    {
+        return (float) $this->activeSavingsAccounts()->sum('balance');
+    }
+
+    /**
+     * Get member's net worth (savings - loans)
+     */
+    public function getNetWorth(): float
+    {
+        return $this->getTotalSavingsBalance() - $this->getTotalLoanBalance();
+    }
+
+    /**
+     * Check if member has outstanding loans
+     */
+    public function hasOutstandingLoans(): bool
+    {
+        return $this->getTotalLoanBalance() > 0;
+    }
+
+    /**
+     * Check if member is eligible for loans
+     */
+    public function isEligibleForLoan(): bool
+    {
+        return $this->status === 'active' &&
+            $this->getTotalSavingsBalance() >= $this->cooperative->getSetting('loan_settings.minimum_savings', 100000);
     }
 }
