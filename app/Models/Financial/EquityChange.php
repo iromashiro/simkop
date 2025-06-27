@@ -34,6 +34,7 @@ class EquityChange extends Model
             'cadangan_risiko' => 'decimal:2',
             'sisa_hasil_usaha' => 'decimal:2',
             'ekuitas_lain' => 'decimal:2',
+            'jumlah_ekuitas' => 'decimal:2', // ✅ ADDED: Cast for computed field
             'sort_order' => 'integer',
         ];
     }
@@ -85,10 +86,11 @@ class EquityChange extends Model
         return $this->transaction_type === 'closing_balance';
     }
 
+    // ✅ FIXED: Use accessor instead of computed column
     public function getTotalEquity(): float
     {
-        return $this->simpanan_pokok + $this->simpanan_wajib + $this->cadangan_umum +
-            $this->cadangan_risiko + $this->sisa_hasil_usaha + $this->ekuitas_lain;
+        return $this->jumlah_ekuitas ?? ($this->simpanan_pokok + $this->simpanan_wajib + $this->cadangan_umum +
+            $this->cadangan_risiko + $this->sisa_hasil_usaha + $this->ekuitas_lain);
     }
 
     public function getTypeLabel(): string

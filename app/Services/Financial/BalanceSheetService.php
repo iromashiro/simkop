@@ -6,76 +6,149 @@ use App\Models\Financial\BalanceSheetAccount;
 use App\Models\Financial\FinancialReport;
 use App\Models\Cooperative;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class BalanceSheetService
 {
-    /**
-     * Category mapping untuk konversi nama
-     */
-    private const CATEGORY_MAP = [
-        'assets' => 'asset',
-        'liabilities' => 'liability',
-        'equity' => 'equity'
-    ];
-
-    /**
-     * Reverse category mapping
-     */
-    private const CATEGORY_REVERSE_MAP = [
-        'asset' => 'assets',
-        'liability' => 'liabilities',
-        'equity' => 'equity'
-    ];
-
     public function createBalanceSheet(array $data, int $createdBy): FinancialReport
     {
         return DB::transaction(function () use ($data, $createdBy) {
-            // Create or update financial report
-            $report = FinancialReport::updateOrCreate(
-                [
+            try {
+                // ✅ ENHANCED: Validate data before processing
+                $this->validateBalanceSheetData($data);
+
+                // Create or update financial report
+                $report = FinancialReport::updateOrCreate(
+                    [
+                        'cooperative_id' => $data['cooperative_id'],
+                        'report_type' => 'balance_sheet',
+                        'reporting_year' => $data['reporting_year'],
+                    ],
+                    [
+                        'status' => 'draft',
+                        'data' => $data,
+                        'notes' => $data['notes'] ?? null,
+                        'created_by' => $createdBy,
+                    ]
+                );
+
+                // Delete existing accounts for this report
+                BalanceSheetAccount::where('cooperative_id', $data['cooperative_id'])
+                    ->where('reporting_year', $data['reporting_year'])
+                    ->delete();
+
+                // Create new accounts
+                $this->createAccounts($data['accounts'], $data['cooperative_id'], $data['reporting_year']);
+
+                return $report;
+            } catch (ValidationException $e) {
+                throw $e;
+            } catch (\Exception $e) {
+                Log::error('Error creating balance sheet', [
+                    'user_id' => $createdBy,
                     'cooperative_id' => $data['cooperative_id'],
-                    'report_type' => 'balance_sheet',
-                    'reporting_year' => $data['reporting_year'],
-                ],
-                [
-                    'status' => 'draft',
-                    'data' => $data,
-                    'notes' => $data['notes'] ?? null,
-                    'created_by' => $createdBy,
-                ]
-            );
-
-            // Delete existing accounts for this report
-            BalanceSheetAccount::where('cooperative_id', $data['cooperative_id'])
-                ->where('reporting_year', $data['reporting_year'])
-                ->delete();
-
-            // Create new accounts
-            $this->createAccounts($data['accounts'], $data['cooperative_id'], $data['reporting_year']);
-
-            return $report;
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw new \Exception('Gagal membuat laporan posisi keuangan: ' . $e->getMessage());
+            }
         });
     }
 
     public function updateBalanceSheet(FinancialReport $report, array $data): FinancialReport
     {
         return DB::transaction(function () use ($report, $data) {
-            // Update report
-            $report->update([
-                'data' => $data,
-                'notes' => $data['notes'] ?? null,
-            ]);
+            try {
+                // ✅ ENHANCED: Validate data before processing
+                $this->validateBalanceSheetData($data);
 
-            // Delete existing accounts
-            BalanceSheetAccount::where('cooperative_id', $report->cooperative_id)
-                ->where('reporting_year', $report->reporting_year)
-                ->delete();
+                // Update report
+                $report->update([
+                    'data' => $data,
+                    'notes' => $data['notes'] ?? null,
+                ]);
 
-            // Create new accounts
-            $this->createAccounts($data['accounts'], $report->cooperative_id, $report->reporting_year);
+                // Delete existing accounts
+                BalanceSheetAccount::where('cooperative_id', $report->cooperative_id)
+                    ->where('reporting_year', $report->reporting_year)
+                    ->delete();
 
-            return $report;
+                // Create new accounts
+                $this->createAccounts($data['accounts'], $report->cooperative_id, $report->reporting_year);
+
+                return $report;
+            } catch (ValidationException $e) {
+                throw $e;
+            } catch (\Exception $e) {
+                Log::error('Error updating balance sheet', [
+                    'report_id' => $report->id,
+                    'user_id' => auth()->id(),
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw new \Exception('Gagal memperbarui laporan posisi keuangan: ' . $e->getMessage());
+            }
         });
+    }
+
+    // ✅ ADDED: Data validation method
+    private function validateBalanceSheetData(array $data): void
+    {
+        // Check balance equation
+        $validation = $this->validateBalanceEquation($data['accounts']);
+        if (!$validation['is_balanced']) {
+            throw ValidationException::withMessages([
+                'balance_equation' => 'Persamaan neraca tidak seimbang. Selisih: Rp ' .
+                    number_format(abs($validation['difference']), 2, ',', '.')
+            ]);
+        }
+
+        // Check for duplicate account codes
+        $this->validateUniqueAccountCodes($data['accounts']);
+
+        // Check for reasonable amounts
+        $this->validateReasonableAmounts($data['accounts']);
+    }
+
+    // ✅ ADDED: Unique account codes validation
+    private function validateUniqueAccountCodes(array $accounts): void
+    {
+        $allCodes = [];
+
+        foreach (['assets', 'liabilities', 'equity'] as $category) {
+            if (isset($accounts[$category])) {
+                foreach ($accounts[$category] as $account) {
+                    $code = $account['account_code'] ?? '';
+                    if (in_array($code, $allCodes)) {
+                        throw ValidationException::withMessages([
+                            'account_codes' => "Kode akun {$code} sudah digunakan."
+                        ]);
+                    }
+                    $allCodes[] = $code;
+                }
+            }
+        }
+    }
+
+    // ✅ ADDED: Reasonable amounts validation
+    private function validateReasonableAmounts(array $accounts): void
+    {
+        foreach (['assets', 'liabilities', 'equity'] as $category) {
+            if (isset($accounts[$category])) {
+                foreach ($accounts[$category] as $account) {
+                    $currentAmount = $account['current_year_amount'] ?? 0;
+                    $previousAmount = $account['previous_year_amount'] ?? 0;
+
+                    // Check for unrealistic changes (more than 1000% increase)
+                    if ($previousAmount > 0 && $currentAmount > ($previousAmount * 10)) {
+                        throw ValidationException::withMessages([
+                            'unrealistic_change' => "Perubahan jumlah terlalu besar untuk akun {$account['account_name']}. Mohon periksa kembali."
+                        ]);
+                    }
+                }
+            }
+        }
     }
 
     private function createAccounts(array $accounts, int $cooperativeId, int $reportingYear): void
@@ -88,7 +161,7 @@ class BalanceSheetService
                         'reporting_year' => $reportingYear,
                         'account_code' => $accountData['account_code'],
                         'account_name' => $accountData['account_name'],
-                        'account_category' => self::CATEGORY_MAP[$category],
+                        'account_category' => $this->mapCategory($category), // ✅ FIXED: Use helper method
                         'account_subcategory' => $accountData['account_subcategory'],
                         'current_year_amount' => $accountData['current_year_amount'],
                         'previous_year_amount' => $accountData['previous_year_amount'] ?? 0,
@@ -100,9 +173,31 @@ class BalanceSheetService
         }
     }
 
+    // ✅ FIXED: Category mapping helper
+    private function mapCategory(string $category): string
+    {
+        return match ($category) {
+            'assets' => 'asset',
+            'liabilities' => 'liability',
+            'equity' => 'equity',
+            default => throw new \InvalidArgumentException("Invalid category: {$category}")
+        };
+    }
+
     public function getPreviousYearData(int $cooperativeId, int $year): array
     {
-        $accounts = BalanceSheetAccount::byCooperative($cooperativeId)
+        // ✅ ENHANCED: Add query optimization
+        $accounts = BalanceSheetAccount::select([
+            'account_code',
+            'account_name',
+            'account_category',
+            'account_subcategory',
+            'current_year_amount',
+            'previous_year_amount',
+            'note_reference',
+            'sort_order'
+        ])
+            ->byCooperative($cooperativeId)
             ->byYear($year)
             ->ordered()
             ->get()
@@ -132,10 +227,11 @@ class BalanceSheetService
 
         foreach (['asset', 'liability', 'equity'] as $category) {
             $categoryAccounts = $accounts->get($category, collect());
-            $pluralCategory = self::CATEGORY_REVERSE_MAP[$category];
 
-            $totals['current_year'][$pluralCategory] = $categoryAccounts->sum('current_year_amount');
-            $totals['previous_year'][$pluralCategory] = $categoryAccounts->sum('previous_year_amount');
+            $categoryKey = $category === 'asset' ? 'assets' : ($category === 'liability' ? 'liabilities' : 'equity');
+
+            $totals['current_year'][$categoryKey] = $categoryAccounts->sum('current_year_amount');
+            $totals['previous_year'][$categoryKey] = $categoryAccounts->sum('previous_year_amount');
         }
 
         // Calculate total liabilities + equity

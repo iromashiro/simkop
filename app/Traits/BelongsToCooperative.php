@@ -16,12 +16,7 @@ trait BelongsToCooperative
             }
         });
 
-        // Global scope for non-admin users
-        static::addGlobalScope('cooperative', function (Builder $builder) {
-            if (auth()->check() && !auth()->user()->isAdminDinas()) {
-                $builder->where('cooperative_id', auth()->user()->cooperative_id);
-            }
-        });
+        // ✅ FIXED: Remove global scope - use conditional scope instead
     }
 
     public function cooperative()
@@ -29,8 +24,31 @@ trait BelongsToCooperative
         return $this->belongsTo(Cooperative::class);
     }
 
+    // ✅ FIXED: Use conditional scope instead of global scope
+    public function scopeForCurrentUser(Builder $query)
+    {
+        if (auth()->check() && !auth()->user()->isAdminDinas()) {
+            return $query->where('cooperative_id', auth()->user()->cooperative_id);
+        }
+        return $query;
+    }
+
     public function scopeByCooperative(Builder $query, int $cooperativeId)
     {
         return $query->where('cooperative_id', $cooperativeId);
+    }
+
+    // ✅ ADDED: Helper method to check access
+    public function canBeAccessedByCurrentUser(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        if (auth()->user()->isAdminDinas()) {
+            return true;
+        }
+
+        return $this->cooperative_id === auth()->user()->cooperative_id;
     }
 }

@@ -9,6 +9,9 @@ use App\Models\Financial\FinancialReport;
 use App\Services\Financial\BalanceSheetService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\QueryException;
 
 class BalanceSheetController extends Controller
 {
@@ -26,62 +29,90 @@ class BalanceSheetController extends Controller
 
     public function index(Request $request)
     {
-        $cooperativeId = auth()->user()->isAdminDinas()
-            ? $request->get('cooperative_id', auth()->user()->cooperative_id)
-            : auth()->user()->cooperative_id;
+        try {
+            $cooperativeId = auth()->user()->isAdminDinas()
+                ? $request->get('cooperative_id', auth()->user()->cooperative_id)
+                : auth()->user()->cooperative_id;
 
-        $year = $request->get('year', date('Y'));
+            $year = $request->get('year', date('Y'));
 
-        $accounts = BalanceSheetAccount::byCooperative($cooperativeId)
-            ->byYear($year)
-            ->ordered()
-            ->get()
-            ->groupBy('account_category');
+            // ✅ ENHANCED: Use forCurrentUser scope
+            $accounts = BalanceSheetAccount::forCurrentUser()
+                ->byCooperative($cooperativeId)
+                ->byYear($year)
+                ->ordered()
+                ->get()
+                ->groupBy('account_category');
 
-        $report = FinancialReport::byCooperative($cooperativeId)
-            ->byType('balance_sheet')
-            ->byYear($year)
-            ->first();
+            $report = FinancialReport::forCurrentUser()
+                ->byCooperative($cooperativeId)
+                ->byType('balance_sheet')
+                ->byYear($year)
+                ->first();
 
-        $previousYearData = $this->balanceSheetService->getPreviousYearData($cooperativeId, $year - 1);
+            $previousYearData = $this->balanceSheetService->getPreviousYearData($cooperativeId, $year - 1);
 
-        return view('financial.balance-sheet.index', compact(
-            'accounts',
-            'report',
-            'cooperativeId',
-            'year',
-            'previousYearData'
-        ));
+            return view('financial.balance-sheet.index', compact(
+                'accounts',
+                'report',
+                'cooperativeId',
+                'year',
+                'previousYearData'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error loading balance sheet index', [
+                'user_id' => auth()->id(),
+                'cooperative_id' => $cooperativeId ?? null,
+                'year' => $year ?? null,
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('dashboard')
+                ->with('error', 'Terjadi kesalahan saat memuat data laporan posisi keuangan.');
+        }
     }
 
     public function create(Request $request)
     {
-        $cooperativeId = auth()->user()->isAdminDinas()
-            ? $request->get('cooperative_id', auth()->user()->cooperative_id)
-            : auth()->user()->cooperative_id;
+        try {
+            $cooperativeId = auth()->user()->isAdminDinas()
+                ? $request->get('cooperative_id', auth()->user()->cooperative_id)
+                : auth()->user()->cooperative_id;
 
-        $year = $request->get('year', date('Y'));
+            $year = $request->get('year', date('Y'));
 
-        // Check if report already exists
-        $existingReport = FinancialReport::byCooperative($cooperativeId)
-            ->byType('balance_sheet')
-            ->byYear($year)
-            ->first();
+            // Check if report already exists
+            $existingReport = FinancialReport::forCurrentUser()
+                ->byCooperative($cooperativeId)
+                ->byType('balance_sheet')
+                ->byYear($year)
+                ->first();
 
-        if ($existingReport && !$existingReport->canBeEdited()) {
+            if ($existingReport && !$existingReport->canBeEdited()) {
+                return redirect()->route('financial.balance-sheet.index')
+                    ->with('error', 'Laporan sudah ada dan tidak dapat diedit.');
+            }
+
+            $defaultAccounts = $this->balanceSheetService->getDefaultAccountStructure();
+            $previousYearData = $this->balanceSheetService->getPreviousYearData($cooperativeId, $year - 1);
+
+            return view('financial.balance-sheet.create', compact(
+                'cooperativeId',
+                'year',
+                'defaultAccounts',
+                'previousYearData'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error loading balance sheet create form', [
+                'user_id' => auth()->id(),
+                'cooperative_id' => $cooperativeId ?? null,
+                'year' => $year ?? null,
+                'error' => $e->getMessage()
+            ]);
+
             return redirect()->route('financial.balance-sheet.index')
-                ->with('error', 'Laporan sudah ada dan tidak dapat diedit.');
+                ->with('error', 'Terjadi kesalahan saat memuat form laporan posisi keuangan.');
         }
-
-        $defaultAccounts = $this->balanceSheetService->getDefaultAccountStructure();
-        $previousYearData = $this->balanceSheetService->getPreviousYearData($cooperativeId, $year - 1);
-
-        return view('financial.balance-sheet.create', compact(
-            'cooperativeId',
-            'year',
-            'defaultAccounts',
-            'previousYearData'
-        ));
     }
 
     public function store(BalanceSheetRequest $request)
@@ -96,80 +127,125 @@ class BalanceSheetController extends Controller
                 'cooperative_id' => $report->cooperative_id,
                 'year' => $report->reporting_year
             ])->with('success', 'Laporan Posisi Keuangan berhasil disimpan.');
-        } catch (\Exception $e) {
+        } catch (ValidationException $e) {
+            // ✅ ENHANCED: Handle validation errors properly
+            return back()->withErrors($e->errors())->withInput();
+        } catch (QueryException $e) {
+            // ✅ ENHANCED: Handle database errors
+            Log::error('Database error in balance sheet creation', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'sql' => $e->getSql(),
+                'data' => $request->validated()
+            ]);
+
             return back()->withInput()
-                ->with('error', 'Gagal menyimpan laporan: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan database. Silakan coba lagi atau hubungi administrator.');
+        } catch (\Exception $e) {
+            // ✅ ENHANCED: Handle unexpected errors
+            Log::error('Unexpected error in balance sheet creation', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'data' => $request->validated()
+            ]);
+
+            return back()->withInput()
+                ->with('error', 'Terjadi kesalahan sistem. Tim teknis telah diberitahu.');
         }
     }
 
     public function show(FinancialReport $report)
     {
-        if (!auth()->user()->canAccessCooperative($report->cooperative_id)) {
-            abort(403);
+        try {
+            // ✅ ENHANCED: Use trait method for access check
+            if (!$report->canBeAccessedByCurrentUser()) {
+                abort(403, 'Anda tidak memiliki akses ke laporan ini.');
+            }
+
+            $accounts = BalanceSheetAccount::byCooperative($report->cooperative_id)
+                ->byYear($report->reporting_year)
+                ->ordered()
+                ->get()
+                ->groupBy('account_category');
+
+            $previousYearData = $this->balanceSheetService->getPreviousYearData(
+                $report->cooperative_id,
+                $report->reporting_year - 1
+            );
+
+            $totals = $this->balanceSheetService->calculateTotals($accounts);
+
+            return view('financial.balance-sheet.show', compact(
+                'report',
+                'accounts',
+                'previousYearData',
+                'totals'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error loading balance sheet show', [
+                'user_id' => auth()->id(),
+                'report_id' => $report->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('financial.balance-sheet.index')
+                ->with('error', 'Terjadi kesalahan saat memuat detail laporan.');
         }
-
-        $accounts = BalanceSheetAccount::byCooperative($report->cooperative_id)
-            ->byYear($report->reporting_year)
-            ->ordered()
-            ->get()
-            ->groupBy('account_category');
-
-        $previousYearData = $this->balanceSheetService->getPreviousYearData(
-            $report->cooperative_id,
-            $report->reporting_year - 1
-        );
-
-        $totals = $this->balanceSheetService->calculateTotals($accounts);
-
-        return view('financial.balance-sheet.show', compact(
-            'report',
-            'accounts',
-            'previousYearData',
-            'totals'
-        ));
     }
 
     public function edit(FinancialReport $report)
     {
-        if (!auth()->user()->canAccessCooperative($report->cooperative_id)) {
-            abort(403);
-        }
+        try {
+            if (!$report->canBeAccessedByCurrentUser()) {
+                abort(403, 'Anda tidak memiliki akses ke laporan ini.');
+            }
 
-        if (!$report->canBeEdited()) {
+            if (!$report->canBeEdited()) {
+                return redirect()->route('financial.balance-sheet.show', $report)
+                    ->with('error', 'Laporan tidak dapat diedit.');
+            }
+
+            $accounts = BalanceSheetAccount::byCooperative($report->cooperative_id)
+                ->byYear($report->reporting_year)
+                ->ordered()
+                ->get()
+                ->groupBy('account_category');
+
+            $previousYearData = $this->balanceSheetService->getPreviousYearData(
+                $report->cooperative_id,
+                $report->reporting_year - 1
+            );
+
+            return view('financial.balance-sheet.edit', compact(
+                'report',
+                'accounts',
+                'previousYearData'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error loading balance sheet edit form', [
+                'user_id' => auth()->id(),
+                'report_id' => $report->id,
+                'error' => $e->getMessage()
+            ]);
+
             return redirect()->route('financial.balance-sheet.show', $report)
-                ->with('error', 'Laporan tidak dapat diedit.');
+                ->with('error', 'Terjadi kesalahan saat memuat form edit laporan.');
         }
-
-        $accounts = BalanceSheetAccount::byCooperative($report->cooperative_id)
-            ->byYear($report->reporting_year)
-            ->ordered()
-            ->get()
-            ->groupBy('account_category');
-
-        $previousYearData = $this->balanceSheetService->getPreviousYearData(
-            $report->cooperative_id,
-            $report->reporting_year - 1
-        );
-
-        return view('financial.balance-sheet.edit', compact(
-            'report',
-            'accounts',
-            'previousYearData'
-        ));
     }
 
     public function update(BalanceSheetRequest $request, FinancialReport $report)
     {
-        if (!auth()->user()->canAccessCooperative($report->cooperative_id)) {
-            abort(403);
-        }
-
-        if (!$report->canBeEdited()) {
-            return redirect()->route('financial.balance-sheet.show', $report)
-                ->with('error', 'Laporan tidak dapat diedit.');
-        }
-
         try {
+            if (!$report->canBeAccessedByCurrentUser()) {
+                abort(403, 'Anda tidak memiliki akses ke laporan ini.');
+            }
+
+            if (!$report->canBeEdited()) {
+                return redirect()->route('financial.balance-sheet.show', $report)
+                    ->with('error', 'Laporan tidak dapat diedit.');
+            }
+
             $this->balanceSheetService->updateBalanceSheet(
                 $report,
                 $request->validated()
@@ -177,23 +253,42 @@ class BalanceSheetController extends Controller
 
             return redirect()->route('financial.balance-sheet.show', $report)
                 ->with('success', 'Laporan Posisi Keuangan berhasil diperbarui.');
-        } catch (\Exception $e) {
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (QueryException $e) {
+            Log::error('Database error in balance sheet update', [
+                'user_id' => auth()->id(),
+                'report_id' => $report->id,
+                'error' => $e->getMessage(),
+                'sql' => $e->getSql()
+            ]);
+
             return back()->withInput()
-                ->with('error', 'Gagal memperbarui laporan: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan database. Silakan coba lagi atau hubungi administrator.');
+        } catch (\Exception $e) {
+            Log::error('Unexpected error in balance sheet update', [
+                'user_id' => auth()->id(),
+                'report_id' => $report->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->withInput()
+                ->with('error', 'Terjadi kesalahan sistem. Tim teknis telah diberitahu.');
         }
     }
 
     public function submit(FinancialReport $report)
     {
-        if (!auth()->user()->canAccessCooperative($report->cooperative_id)) {
-            abort(403);
-        }
-
-        if (!$report->canBeSubmitted()) {
-            return back()->with('error', 'Laporan tidak dapat diajukan.');
-        }
-
         try {
+            if (!$report->canBeAccessedByCurrentUser()) {
+                abort(403, 'Anda tidak memiliki akses ke laporan ini.');
+            }
+
+            if (!$report->canBeSubmitted()) {
+                return back()->with('error', 'Laporan tidak dapat diajukan.');
+            }
+
             $report->submit();
 
             $this->notificationService->reportSubmitted(
@@ -204,21 +299,27 @@ class BalanceSheetController extends Controller
 
             return back()->with('success', 'Laporan berhasil diajukan untuk persetujuan.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengajukan laporan: ' . $e->getMessage());
+            Log::error('Error submitting balance sheet', [
+                'user_id' => auth()->id(),
+                'report_id' => $report->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return back()->with('error', 'Gagal mengajukan laporan. Silakan coba lagi.');
         }
     }
 
     public function approve(Request $request, FinancialReport $report)
     {
-        if (!auth()->user()->isAdminDinas()) {
-            abort(403);
-        }
-
-        if (!$report->canBeApproved()) {
-            return back()->with('error', 'Laporan tidak dapat disetujui.');
-        }
-
         try {
+            if (!auth()->user()->isAdminDinas()) {
+                abort(403, 'Hanya Admin Dinas yang dapat menyetujui laporan.');
+            }
+
+            if (!$report->canBeApproved()) {
+                return back()->with('error', 'Laporan tidak dapat disetujui.');
+            }
+
             $report->approve(auth()->id());
 
             $this->notificationService->reportApproved(
@@ -229,25 +330,31 @@ class BalanceSheetController extends Controller
 
             return back()->with('success', 'Laporan berhasil disetujui.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menyetujui laporan: ' . $e->getMessage());
+            Log::error('Error approving balance sheet', [
+                'user_id' => auth()->id(),
+                'report_id' => $report->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return back()->with('error', 'Gagal menyetujui laporan. Silakan coba lagi.');
         }
     }
 
     public function reject(Request $request, FinancialReport $report)
     {
-        if (!auth()->user()->isAdminDinas()) {
-            abort(403);
-        }
-
-        if (!$report->canBeApproved()) {
-            return back()->with('error', 'Laporan tidak dapat ditolak.');
-        }
-
-        $request->validate([
-            'rejection_reason' => 'required|string|max:1000'
-        ]);
-
         try {
+            if (!auth()->user()->isAdminDinas()) {
+                abort(403, 'Hanya Admin Dinas yang dapat menolak laporan.');
+            }
+
+            if (!$report->canBeApproved()) {
+                return back()->with('error', 'Laporan tidak dapat ditolak.');
+            }
+
+            $request->validate([
+                'rejection_reason' => 'required|string|max:1000'
+            ]);
+
             $report->reject(auth()->id(), $request->rejection_reason);
 
             $this->notificationService->reportRejected(
@@ -258,22 +365,30 @@ class BalanceSheetController extends Controller
             );
 
             return back()->with('success', 'Laporan berhasil ditolak.');
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menolak laporan: ' . $e->getMessage());
+            Log::error('Error rejecting balance sheet', [
+                'user_id' => auth()->id(),
+                'report_id' => $report->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return back()->with('error', 'Gagal menolak laporan. Silakan coba lagi.');
         }
     }
 
     public function destroy(FinancialReport $report)
     {
-        if (!auth()->user()->canAccessCooperative($report->cooperative_id)) {
-            abort(403);
-        }
-
-        if (!$report->isDraft()) {
-            return back()->with('error', 'Hanya laporan draft yang dapat dihapus.');
-        }
-
         try {
+            if (!$report->canBeAccessedByCurrentUser()) {
+                abort(403, 'Anda tidak memiliki akses ke laporan ini.');
+            }
+
+            if (!$report->isDraft()) {
+                return back()->with('error', 'Hanya laporan draft yang dapat dihapus.');
+            }
+
             // Delete related accounts
             BalanceSheetAccount::byCooperative($report->cooperative_id)
                 ->byYear($report->reporting_year)
@@ -284,7 +399,13 @@ class BalanceSheetController extends Controller
             return redirect()->route('financial.balance-sheet.index')
                 ->with('success', 'Laporan berhasil dihapus.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menghapus laporan: ' . $e->getMessage());
+            Log::error('Error deleting balance sheet', [
+                'user_id' => auth()->id(),
+                'report_id' => $report->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return back()->with('error', 'Gagal menghapus laporan. Silakan coba lagi.');
         }
     }
 }
