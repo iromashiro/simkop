@@ -134,6 +134,7 @@ return [
         App\Providers\AuthServiceProvider::class,
         App\Providers\TenancyServiceProvider::class,
         App\Providers\RepositoryServiceProvider::class,
+        App\Providers\DomainServiceProvider::class,
     ],
 
     'key' => env('APP_KEY'),
