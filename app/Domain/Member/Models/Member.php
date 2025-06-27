@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use App\Domain\Loan\Models\LoanAccount;
+use App\Domain\Savings\Models\SavingsAccount;
 
 /**
  * Member model for cooperative member management
