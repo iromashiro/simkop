@@ -1,309 +1,61 @@
-# 🏛️ HERMES - Cooperative Financial Reporting Management System
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Laravel-12-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" />
-  <img src="https://img.shields.io/badge/PHP-8.4-777BB4?style=for-the-badge&logo=php&logoColor=white" />
-  <img src="https://img.shields.io/badge/PostgreSQL-17-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
-  <img src="https://img.shields.io/badge/Bootstrap-5-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white" />
-</div>
+<p align="center">
+<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+</p>
 
-## 📋 Overview
+## About Laravel
 
-**HERMES** is a comprehensive financial reporting management system designed for the Muara Enim Regency Cooperative and UMKM Office (Dinas Koperasi dan UMKM Kabupaten Muara Enim). Named after the Greek messenger god, HERMES serves as the communication bridge between 300+ cooperatives and the government office, enabling digital transformation of cooperative financial management.
+Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-### 🎯 Key Objectives
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
--   **Digitalize** cooperative financial reporting processes
--   **Enable** 300+ cooperatives to independently manage their financial data
--   **Automate** generation of 10 standardized financial reports
--   **Centralize** data management for better oversight
--   **Streamline** reporting workflows between cooperatives and government
+Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-## 🏗️ System Architecture
+## Learning Laravel
 
-### Multi-Tenant Architecture
+Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-```
-┌─────────────────────────────────────────────────────┐
-│                 Load Balancer                        │
-└──────────────────────┬──────────────────────────────┘
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
-   ┌────▼────┐   ┌────▼────┐   ┌────▼────┐
-   │ Web     │   │ Web     │   │ Web     │
-   │ Server  │   │ Server  │   │ Server  │
-   └────┬────┘   └────┬────┘   └────┬────┘
-        │              │              │
-        └──────────────┼──────────────┘
-                       │
-              ┌────────┼────────┐
-              │        │        │
-         ┌────▼───┐ ┌──▼──┐ ┌──▼──┐
-         │Primary │ │Read │ │Queue│
-         │Database│ │Repli│ │Work │
-         └────────┘ └─────┘ └─────┘
-```
+You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
 
-### Core Domains
+If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
--   **Cooperative Management** - Multi-tenant system supporting 300+ cooperatives
--   **Financial Management** - Double-entry accounting with Indonesian standards
--   **Member Management** - Complete member lifecycle and savings tracking
--   **Reporting Engine** - 10 standardized reports with PDF/Excel export
--   **SHU Management** - Profit sharing calculation and distribution
--   **Budget Planning** - RAPB with variance analysis
+## Laravel Sponsors
 
-## 🚀 Quick Start for AI Agents
+We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
 
-### Backend Requirements
+### Premium Partners
 
-```bash
-# Core Stack
-- PHP 8.4+
-- Laravel 12
-- PostgreSQL 17
-- Redis (optional)
+- **[Vehikl](https://vehikl.com)**
+- **[Tighten Co.](https://tighten.co)**
+- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+- **[64 Robots](https://64robots.com)**
+- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
+- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+- **[Redberry](https://redberry.international/laravel-development)**
+- **[Active Logic](https://activelogic.com)**
 
-# Key Laravel Packages
-- spatie/laravel-permission    # RBAC
-- maatwebsite/excel           # Excel exports
-- barryvdh/laravel-dompdf     # PDF generation
-- spatie/laravel-activitylog  # Audit logging
-```
+## Contributing
 
-### Frontend Requirements
+Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-```bash
-# UI Stack
-- Bootstrap 5
-- Blade Templates (no Vue/React/Livewire)
-- AlpineJS for interactivity
-- jQuery (minimal usage)
-- Chart.js for data visualization
-```
+## Code of Conduct
 
-### Database Schema Overview
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-```sql
--- Multi-tenant structure: All tables include cooperative_id
-cooperatives (id, name, status, kementerian_id...)
-users (id, cooperative_id, name, email...)
-members (id, cooperative_id, member_number, name...)
-accounts (id, cooperative_id, code, name, type...)
-journal_entries (id, cooperative_id, transaction_date...)
-journal_lines (id, journal_entry_id, account_id, debit, credit...)
-savings (id, member_id, type[pokok/wajib/khusus/sukarela]...)
-loans (id, member_id, principal_amount, interest_rate...)
-shu_plans (id, cooperative_id, fiscal_year, total_shu...)
-budgets (id, cooperative_id, fiscal_year, status...)
-```
+## Security Vulnerabilities
 
-## 📊 Financial Reports System
+If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
-### 10 Standardized Reports
+## License
 
-1. **Balance Sheet** (Laporan Posisi Keuangan)
-2. **Income Statement** (Laporan Perhitungan Hasil Usaha)
-3. **Statement of Changes in Equity** (Laporan Perubahan Ekuitas)
-4. **Cash Flow Statement** (Laporan Arus Kas)
-5. **Notes to Financial Statements** (Catatan Atas Laporan Keuangan)
-6. **Member Savings List** (Daftar Simpanan Anggota)
-7. **Member Loan Receivables** (Daftar Piutang Simpan Pinjam)
-8. **Non-Performing Loans List** (Daftar Piutang Tidak Lancar)
-9. **SHU Distribution Plan** (Daftar Rencana Pembagian SHU)
-10. **Budget vs Actual** (RAPB)
-
-## 🔒 Security Architecture
-
-### Multi-layered Security
-
--   **Network**: TLS 1.3, WAF, DDoS protection
--   **Application**: CSRF protection, XSS prevention, SQL injection prevention
--   **Authentication**: Laravel Fortify, optional MFA
--   **Authorization**: Role-based access control with tenant awareness
--   **Data**: Field-level encryption, audit logging, tenant isolation
-
-### User Roles
-
-1. **Super Admin** - Dinas Koperasi staff with full system access
-2. **Cooperative Admin** - Manages cooperative settings and reports
-3. **Cooperative Staff** - Daily operations and data entry
-4. **Members** - View personal savings, loans, and SHU
-
-## 🛠️ Development Guidelines
-
-### Backend Structure
-
-```
-app/
-├── Http/
-│   ├── Controllers/
-│   │   ├── CooperativeController.php
-│   │   ├── FinancialController.php
-│   │   ├── MemberController.php
-│   │   └── ReportController.php
-│   └── Middleware/
-│       └── TenantAwareMiddleware.php
-├── Models/
-│   ├── Cooperative.php
-│   ├── Member.php
-│   ├── JournalEntry.php
-│   └── Account.php
-├── Services/
-│   ├── FinancialService.php
-│   ├── ReportingService.php
-│   └── ShuCalculationService.php
-└── Repositories/
-    ├── MemberRepository.php
-    └── JournalRepository.php
-```
-
-### Frontend Structure
-
-```
-resources/
-├── views/
-│   ├── layouts/
-│   │   ├── app.blade.php
-│   │   └── guest.blade.php
-│   ├── cooperatives/
-│   ├── financial/
-│   ├── members/
-│   └── reports/
-├── css/
-│   └── app.css (Bootstrap customizations)
-└── js/
-    └── app.js (AlpineJS components)
-```
-
-## 🔧 Key Implementation Patterns
-
-### Multi-Tenancy
-
-```php
-// All queries automatically scoped by cooperative_id
-Member::where('status', 'active')->get();
-// Returns only members from current cooperative
-```
-
-### Double-Entry Validation
-
-```php
-// Journal entries must balance
-$totalDebit = $entry->lines->sum('debit_amount');
-$totalCredit = $entry->lines->sum('credit_amount');
-if (abs($totalDebit - $totalCredit) > 0.01) {
-    throw new UnbalancedEntryException();
-}
-```
-
-### Report Generation
-
-```php
-// Cached report generation
-$report = ReportService::generateBalanceSheet(
-    $cooperativeId,
-    '2024-12-31'
-);
-// Returns PDF/Excel based on request
-```
-
-## 📝 API Reference
-
-### Authentication
-
-```http
-POST /api/v1/auth/login
-{
-  "email": "admin@koperasi.com",
-  "password": "password",
-  "cooperative_id": 1
-}
-```
-
-### Financial Operations
-
-```http
-POST /api/v1/financial/journal-entries
-{
-  "transaction_date": "2025-01-15",
-  "description": "Member savings deposit",
-  "lines": [
-    {"account_id": 1, "debit": 100000, "credit": 0},
-    {"account_id": 2, "debit": 0, "credit": 100000}
-  ]
-}
-```
-
-### Report Generation
-
-```http
-POST /api/v1/reports/generate
-{
-  "report_type": "balance_sheet",
-  "parameters": {
-    "as_of_date": "2024-12-31",
-    "format": "pdf"
-  }
-}
-```
-
-## 🚦 Performance Targets
-
--   Page load: < 3 seconds
--   Report generation: < 10 seconds
--   Concurrent users: 500+
--   System availability: 99.5% during business hours
--   Data accuracy: 100% for financial calculations
-
-## 📅 Implementation Timeline
-
-### Phase 1: Foundation (Months 1-2)
-
--   Multi-tenant architecture
--   User authentication & authorization
--   Basic cooperative management
-
-### Phase 2: Financial Core (Month 3)
-
--   Chart of accounts
--   Journal entries
--   Financial reporting framework
-
-### Phase 3: Member Management (Month 4)
-
--   Member registration
--   Savings tracking (4 types)
--   Loan management
-
-### Phase 4: Advanced Features (Months 5-6)
-
--   All 10 financial reports
--   SHU distribution
--   Budget planning (RAPB)
--   System optimization
-
-## 🤝 Contributing
-
-This project follows Laravel best practices and Indonesian cooperative accounting standards. Key considerations:
-
-1. **Multi-tenancy**: Always consider tenant isolation
-2. **Financial Integrity**: Maintain double-entry balance
-3. **Performance**: Cache reports, optimize queries
-4. **Security**: Validate all inputs, log all changes
-5. **Localization**: Use Indonesian language and formats
-
-## 📞 Support & Documentation
-
--   **Technical Stack**: Laravel 12, PHP 8.4, PostgreSQL 17, Bootstrap 5
--   **Business Domain**: Indonesian cooperative financial management
--   **Compliance**: Indonesian cooperative accounting standards
--   **Target Users**: 300+ cooperatives in Muara Enim Regency
-
----
-
-**Document Version**: 1.0  
-**Last Updated**: 2025-05-26  
-**Project Codename**: HERMES  
-**Target Deployment**: 2025 Q3
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
