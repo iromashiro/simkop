@@ -1,61 +1,548 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Backend - Sistem Notifikasi Aplikasi Pelaporan Keuangan Koperasi
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 📋 Daftar Isi
 
-## About Laravel
+-   [Overview](#overview)
+-   [Fitur](#fitur)
+-   [Tech Stack](#tech-stack)
+-   [Requirements](#requirements)
+-   [Instalasi](#instalasi)
+-   [Konfigurasi](#konfigurasi)
+-   [Struktur Database](#struktur-database)
+-   [API Documentation](#api-documentation)
+-   [Event System](#event-system)
+-   [Testing](#testing)
+-   [Deployment](#deployment)
+-   [Contributing](#contributing)
+-   [License](#license)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Overview
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Backend sistem notifikasi untuk Aplikasi Pelaporan Keuangan Koperasi yang dibangun dengan Laravel. Sistem ini menyediakan notifikasi in-app yang sederhana namun efektif untuk mendukung workflow pelaporan keuangan antara Admin Koperasi dan Admin Dinas.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Arsitektur Simplified
 
-## Learning Laravel
+Sistem ini menggunakan pendekatan **simplified architecture** yang mengutamakan:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+-   ✅ Direct model access (tanpa repository pattern)
+-   ✅ Simple service layer dengan minimal abstraction
+-   ✅ Direct JSON response (tanpa resource transformation)
+-   ✅ Database-driven notification storage
+-   ✅ HTTP polling untuk update notifikasi
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Fitur
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Core Features
 
-## Laravel Sponsors
+-   🔔 **In-App Notifications** - Notifikasi real-time tanpa dependensi eksternal
+-   📊 **Event-Driven Architecture** - Notifikasi otomatis berdasarkan event sistem
+-   🔒 **User-Specific Notifications** - Setiap user hanya melihat notifikasinya sendiri
+-   📱 **Responsive API** - RESTful API dengan rate limiting
+-   🗑️ **Auto-Purge** - Pembersihan otomatis notifikasi lama
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Notification Types
 
-### Premium Partners
+1. **report_submitted** - Notifikasi saat koperasi mengirim laporan
+2. **report_approved** - Notifikasi saat laporan disetujui
+3. **report_rejected** - Notifikasi saat laporan ditolak
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Tech Stack
+
+-   **Framework**: Laravel 10.x
+-   **Database**: PostgreSQL 14+
+-   **Authentication**: Laravel Sanctum
+-   **Queue**: Sync (dapat diupgrade ke Redis)
+-   **Cache**: File-based (dapat diupgrade)
+-   **PHP**: 8.1+
+
+## Requirements
+
+### System Requirements
+
+```bash
+PHP >= 8.1
+PostgreSQL >= 14
+Composer >= 2.0
+Node.js >= 16 (untuk asset compilation)
+```
+
+### PHP Extensions
+
+```bash
+php-mbstring
+php-xml
+php-pgsql
+php-json
+php-bcmath
+php-tokenizer
+```
+
+## Instalasi
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/your-org/koperasi-notification-backend.git
+cd koperasi-notification-backend
+```
+
+### 2. Install Dependencies
+
+```bash
+composer install
+```
+
+### 3. Environment Setup
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+### 4. Configure Database
+
+Edit `.env` file:
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=koperasi_notifications
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+### 5. Run Migrations
+
+```bash
+php artisan migrate
+```
+
+### 6. Setup Authentication
+
+```bash
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+php artisan migrate
+```
+
+### 7. Configure Rate Limiting
+
+Di `app/Providers/RouteServiceProvider.php`:
+
+```php
+RateLimiter::for('notifications', function (Request $request) {
+    return Limit::perMinute(12)->by($request->user()?->id ?: $request->ip());
+});
+```
+
+### 8. Register Event Subscriber
+
+Di `app/Providers/EventServiceProvider.php`:
+
+```php
+protected $subscribe = [
+    \App\Listeners\NotificationEventSubscriber::class,
+];
+```
+
+## Konfigurasi
+
+### Environment Variables
+
+```env
+# App Configuration
+APP_NAME="Koperasi Notification System"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+# Notification Settings
+NOTIFICATION_POLLING_INTERVAL=5000 # dalam milliseconds
+NOTIFICATION_RETENTION_DAYS=365
+NOTIFICATION_PAGE_LIMIT=50
+
+# Cache Configuration
+CACHE_DRIVER=file
+SESSION_DRIVER=file
+
+# Queue Configuration (optional upgrade)
+QUEUE_CONNECTION=sync
+```
+
+### Laravel Configuration
+
+```php
+// config/notifications.php
+return [
+    'polling_interval' => env('NOTIFICATION_POLLING_INTERVAL', 5000),
+    'retention_days' => env('NOTIFICATION_RETENTION_DAYS', 365),
+    'page_limit' => env('NOTIFICATION_PAGE_LIMIT', 50),
+];
+```
+
+## Struktur Database
+
+### Notifications Table
+
+```sql
+CREATE TABLE notifications (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    cooperative_id BIGINT REFERENCES cooperatives(id),
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Performance indexes
+CREATE INDEX idx_notifications_user_unread
+ON notifications(user_id, is_read, created_at);
+```
+
+## API Documentation
+
+### Authentication
+
+Semua endpoint memerlukan authentication token:
+
+```http
+Authorization: Bearer {token}
+```
+
+### Endpoints
+
+#### 1. Get Notifications
+
+```http
+GET /api/notifications?limit=50
+```
+
+**Response:**
+
+```json
+{
+    "data": [
+        {
+            "id": 123,
+            "type": "report_submitted",
+            "title": "Laporan baru dikirim",
+            "message": "Laporan Neraca tahun 2024 telah dikirim oleh koperasi KPN Kesatuan",
+            "is_read": false,
+            "created_at": "5 minutes ago",
+            "created_at_iso": "2024-06-15T14:30:00+07:00",
+            "cooperative": {
+                "id": 42,
+                "name": "KPN Kesatuan"
+            }
+        }
+    ]
+}
+```
+
+#### 2. Get Unread Count
+
+```http
+GET /api/notifications/count
+```
+
+**Response:**
+
+```json
+{
+    "count": 5
+}
+```
+
+#### 3. Mark as Read
+
+```http
+POST /api/notifications/{id}/read
+X-CSRF-TOKEN: {csrf_token}
+```
+
+**Response:**
+
+```json
+{
+    "success": true
+}
+```
+
+### Error Responses
+
+```json
+{
+    "error": "The notification could not be found."
+}
+```
+
+**Status Codes:**
+
+-   `200` - Success
+-   `401` - Unauthorized
+-   `404` - Not Found
+-   `429` - Too Many Requests
+
+## Event System
+
+### Available Events
+
+#### 1. ReportSubmittedEvent
+
+```php
+event(new ReportSubmittedEvent($reportId, $cooperativeId));
+```
+
+#### 2. ReportApprovedEvent
+
+```php
+event(new ReportApprovedEvent($reportId, $cooperativeId));
+```
+
+#### 3. ReportRejectedEvent
+
+```php
+event(new ReportRejectedEvent($reportId, $cooperativeId, $reason));
+```
+
+### Creating Custom Notifications
+
+```php
+// In your service/controller
+use App\Services\NotificationService;
+
+class YourService
+{
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
+    public function someAction()
+    {
+        // Direct notification creation
+        $this->notificationService->createNotification(
+            $userId,
+            $cooperativeId,
+            'custom_type',
+            'Custom Title',
+            'Custom message content'
+        );
+    }
+}
+```
+
+## Testing
+
+### Run All Tests
+
+```bash
+php artisan test
+```
+
+### Run Specific Test Suite
+
+```bash
+php artisan test --testsuite=Feature
+php artisan test --testsuite=Unit
+```
+
+### Test Structure
+
+```
+tests/
+├── Feature/
+│   ├── NotificationApiTest.php
+│   ├── NotificationEventTest.php
+│   └── NotificationWorkflowTest.php
+├── Unit/
+│   ├── NotificationServiceTest.php
+│   ├── NotificationModelTest.php
+│   └── NotificationControllerTest.php
+```
+
+### Example Test
+
+```php
+public function test_user_can_get_own_notifications()
+{
+    $user = User::factory()->create();
+    Notification::factory()->count(5)->create(['user_id' => $user->id]);
+
+    $response = $this->actingAs($user)
+                     ->getJson('/api/notifications');
+
+    $response->assertStatus(200)
+             ->assertJsonCount(5, 'data');
+}
+```
+
+## Deployment
+
+### Production Checklist
+
+1. **Environment Configuration**
+
+```bash
+APP_ENV=production
+APP_DEBUG=false
+```
+
+2. **Optimize Application**
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan optimize
+```
+
+3. **Database Optimization**
+
+```bash
+# Ensure indexes are created
+php artisan migrate --force
+```
+
+4. **Setup Cron Jobs**
+
+```bash
+# Add to crontab for notification purging
+0 2 * * * cd /path/to/project && php artisan notifications:purge >> /dev/null 2>&1
+```
+
+5. **Configure Web Server**
+
+**Nginx Configuration:**
+
+```nginx
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}
+
+location ~ \.php$ {
+    fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+    fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+    include fastcgi_params;
+}
+```
+
+### Performance Optimization
+
+1. **Enable OPcache**
+
+```ini
+opcache.enable=1
+opcache.memory_consumption=256
+opcache.max_accelerated_files=20000
+```
+
+2. **Configure Database Connection Pooling**
+
+```php
+// config/database.php
+'pgsql' => [
+    'driver' => 'pgsql',
+    'options' => [
+        PDO::ATTR_PERSISTENT => true,
+    ],
+],
+```
+
+### Monitoring
+
+1. **Log Configuration**
+
+```env
+LOG_CHANNEL=daily
+LOG_LEVEL=error
+```
+
+2. **Health Check Endpoint**
+
+```php
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now()->toIso8601String(),
+    ]);
+});
+```
 
 ## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Development Workflow
 
-## Code of Conduct
+1. **Fork & Clone**
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+git clone https://github.com/YOUR_USERNAME/koperasi-notification-backend.git
+```
 
-## Security Vulnerabilities
+2. **Create Feature Branch**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+git checkout -b feature/your-feature-name
+```
+
+3. **Make Changes & Test**
+
+```bash
+# Make your changes
+php artisan test
+```
+
+4. **Commit dengan Conventional Commits**
+
+```bash
+git commit -m "feat: add notification grouping feature"
+git commit -m "fix: resolve notification count cache issue"
+git commit -m "docs: update API documentation"
+```
+
+5. **Push & Create PR**
+
+```bash
+git push origin feature/your-feature-name
+```
+
+### Code Standards
+
+-   Follow PSR-12 coding standards
+-   Use Laravel best practices
+-   Write tests for new features
+-   Update documentation
+
+### Commit Message Format
+
+```
+type(scope): subject
+
+body
+
+footer
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Support
+
+-   📧 Email: support@koperasi-app.id
+-   📱 Phone: +62 21 1234 5678
+-   📖 Documentation: https://docs.koperasi-app.id
+-   🐛 Issues: https://github.com/your-org/koperasi-notification-backend/issues
+
+---
+
+**Developed with ❤️ for Koperasi Indonesia**
