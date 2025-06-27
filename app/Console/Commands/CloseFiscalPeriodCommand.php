@@ -3,10 +3,10 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Domain\Financial\Services\FiscalPeriodService;
-use App\Domain\Financial\Models\FiscalPeriod;
+use App\Domain\Accounting\Services\FiscalPeriodService;
+use App\Domain\Accounting\Models\FiscalPeriod;
 use App\Domain\Cooperative\Models\Cooperative;
-use App\Domain\Financial\Exceptions\FiscalPeriodClosedException;
+use App\Domain\Accounting\Exceptions\FiscalPeriodClosedException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
