@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Member\Services\MemberService;
-use App\Domain\Member\Models\Member;
 use App\Domain\Member\DTOs\CreateMemberDTO;
 use App\Domain\Member\DTOs\UpdateMemberDTO;
 use App\Http\Requests\Web\Member\CreateMemberRequest;
 use App\Http\Requests\Web\Member\UpdateMemberRequest;
+use App\Domain\Member\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
