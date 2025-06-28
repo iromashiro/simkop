@@ -23,51 +23,27 @@ $breadcrumbs = [
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="{{ route('admin.cooperatives.index') }}" class="row g-3">
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <label class="form-label">Cari Koperasi</label>
-                <input type="text" class="form-control" name="search" value="{{ request('search') }}"
-                    placeholder="Nama atau nomor registrasi...">
+                <input type="text" class="form-control" name="search" value="{{ $search }}"
+                    placeholder="Nama, kode, atau alamat koperasi...">
             </div>
-            <div class="col-md-2">
-                <label class="form-label">Status</label>
-                <select class="form-select" name="status">
-                    <option value="">Semua Status</option>
-                    <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Aktif</option>
-                    <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Tidak Aktif
-                    </option>
-                    <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Jenis</label>
-                <select class="form-select" name="type">
-                    <option value="">Semua Jenis</option>
-                    <option value="simpan_pinjam" {{ request('type') === 'simpan_pinjam' ? 'selected' : '' }}>Simpan
-                        Pinjam</option>
-                    <option value="konsumen" {{ request('type') === 'konsumen' ? 'selected' : '' }}>Konsumen</option>
-                    <option value="produsen" {{ request('type') === 'produsen' ? 'selected' : '' }}>Produsen</option>
-                    <option value="jasa" {{ request('type') === 'jasa' ? 'selected' : '' }}>Jasa</option>
+            <div class="col-md-3">
+                <label class="form-label">Tampilkan per halaman</label>
+                <select class="form-select" name="per_page">
+                    <option value="15" {{ request('per_page') == 15 ? 'selected' : '' }}>15</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Kecamatan</label>
-                <select class="form-select" name="district">
-                    <option value="">Semua Kecamatan</option>
-                    @foreach($districts as $district)
-                    <option value="{{ $district }}" {{ request('district') === $district ? 'selected' : '' }}>
-                        {{ $district }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-search"></i>
+                        <i class="bi bi-search"></i> Cari
                     </button>
                     <a href="{{ route('admin.cooperatives.index') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-clockwise"></i>
+                        <i class="bi bi-arrow-clockwise"></i> Reset
                     </a>
                 </div>
             </div>
@@ -97,20 +73,12 @@ $breadcrumbs = [
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>
-                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('direction') === 'asc' ? 'desc' : 'asc']) }}"
-                                class="text-decoration-none text-dark">
-                                Nama Koperasi
-                                @if(request('sort') === 'name')
-                                <i class="bi bi-arrow-{{ request('direction') === 'asc' ? 'up' : 'down' }}"></i>
-                                @endif
-                            </a>
-                        </th>
-                        <th>No. Registrasi</th>
-                        <th>Jenis</th>
+                        <th>Koperasi</th>
+                        <th>Kode</th>
                         <th>Alamat</th>
-                        <th>Status</th>
-                        <th>Anggota</th>
+                        <th>Pengguna</th>
+                        <th>Laporan</th>
+                        <th>Dibuat</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -119,51 +87,35 @@ $breadcrumbs = [
                     <tr>
                         <td>
                             <div class="d-flex align-items-center">
-                                @if($cooperative->logo)
-                                <img src="{{ Storage::url($cooperative->logo) }}" class="rounded me-3" width="40"
-                                    height="40" alt="Logo">
-                                @else
                                 <div class="bg-primary text-white rounded d-flex align-items-center justify-content-center me-3"
                                     style="width: 40px; height: 40px;">
                                     {{ strtoupper(substr($cooperative->name, 0, 2)) }}
                                 </div>
-                                @endif
                                 <div>
                                     <div class="fw-bold">{{ $cooperative->name }}</div>
-                                    <small class="text-muted">{{ $cooperative->chairman_name }}</small>
+                                    <small
+                                        class="text-muted">{{ $cooperative->chairman_name ?? 'Belum diatur' }}</small>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="font-monospace">{{ $cooperative->registration_number }}</span>
-                            <br>
-                            <small class="text-muted">{{ $cooperative->registration_date->format('d/m/Y') }}</small>
+                            <span class="font-monospace fw-bold">{{ $cooperative->code }}</span>
                         </td>
                         <td>
-                            <span class="badge bg-secondary">
-                                {{ ucwords(str_replace('_', ' ', $cooperative->type)) }}
-                            </span>
+                            <div>{{ Str::limit($cooperative->address, 50) }}</div>
+                            <small class="text-muted">{{ $cooperative->phone ?? 'No telepon belum diatur' }}</small>
                         </td>
                         <td>
-                            <div>{{ $cooperative->address }}</div>
-                            <small class="text-muted">{{ $cooperative->district }}, {{ $cooperative->city }}</small>
+                            <div class="fw-bold">{{ $cooperative->users->count() }}</div>
+                            <small class="text-muted">pengguna</small>
                         </td>
                         <td>
-                            @switch($cooperative->status)
-                            @case('active')
-                            <span class="badge bg-success">Aktif</span>
-                            @break
-                            @case('inactive')
-                            <span class="badge bg-danger">Tidak Aktif</span>
-                            @break
-                            @case('pending')
-                            <span class="badge bg-warning">Pending</span>
-                            @break
-                            @endswitch
+                            <div class="fw-bold">{{ $cooperative->financialReports->count() ?? 0 }}</div>
+                            <small class="text-muted">laporan</small>
                         </td>
                         <td>
-                            <div class="fw-bold">{{ $cooperative->member_count ?? 0 }}</div>
-                            <small class="text-muted">anggota</small>
+                            <div>{{ $cooperative->created_at->format('d/m/Y') }}</div>
+                            <small class="text-muted">{{ $cooperative->created_at->diffForHumans() }}</small>
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
@@ -193,16 +145,23 @@ $breadcrumbs = [
                 Menampilkan {{ $cooperatives->firstItem() }} - {{ $cooperatives->lastItem() }}
                 dari {{ $cooperatives->total() }} koperasi
             </div>
-            {{ $cooperatives->links() }}
+            {{ $cooperatives->appends(request()->query())->links() }}
         </div>
         @else
         <div class="text-center py-5">
             <i class="bi bi-building fs-1 text-muted"></i>
             <h5 class="text-muted mt-3">Tidak ada koperasi ditemukan</h5>
-            <p class="text-muted">Silakan ubah filter pencarian atau tambah koperasi baru</p>
-            <a href="{{ route('admin.cooperatives.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-1"></i> Tambah Koperasi
+            @if($search)
+            <p class="text-muted">Tidak ada hasil untuk pencarian "{{ $search }}"</p>
+            <a href="{{ route('admin.cooperatives.index') }}" class="btn btn-outline-primary">
+                Lihat Semua Koperasi
             </a>
+            @else
+            <p class="text-muted">Belum ada koperasi yang terdaftar</p>
+            <a href="{{ route('admin.cooperatives.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Tambah Koperasi Pertama
+            </a>
+            @endif
         </div>
         @endif
     </div>
