@@ -86,31 +86,45 @@ simkop/
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── Auth/                    # Laravel Breeze (existing)
+│   │   │   │   ├── AuthenticatedSessionController.php    # ✅ EXISTING
+│   │   │   │   ├── ConfirmablePasswordController.php     # ✅ EXISTING
+│   │   │   │   ├── EmailVerificationNotificationController.php # ✅ EXISTING
+│   │   │   │   ├── EmailVerificationPromptController.php # ✅ EXISTING
+│   │   │   │   ├── NewPasswordController.php             # ✅ EXISTING
+│   │   │   │   ├── PasswordController.php                # ✅ EXISTING
+│   │   │   │   ├── PasswordResetLinkController.php       # ✅ EXISTING
+│   │   │   │   ├── RegisteredUserController.php          # ✅ EXISTING
+│   │   │   │   └── VerifyEmailController.php             # ✅ EXISTING
+│   │   │   ├── ProfileController.php                     # ✅ EXISTING (MISSING in README)
 │   │   │   ├── Admin/
-│   │   │   │   ├── CooperativeController.php✅
-│   │   │   │   ├── UserManagementController.php✅
-│   │   │   │   ├── DashboardController.php✅
-│   │   │   │   └── ReportApprovalController.php✅
+│   │   │   │   ├── CooperativeController.php
+│   │   │   │   ├── UserManagementController.php
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   └── ReportApprovalController.php
 │   │   │   ├── Financial/
-│   │   │   │   ├── BalanceSheetController.php✅
-│   │   │   │   ├── IncomeStatementController.php✅
-│   │   │   │   ├── EquityChangesController.php✅
-│   │   │   │   ├── CashFlowController.php✅
-│   │   │   │   ├── MemberSavingsController.php✅
-│   │   │   │   ├── MemberReceivablesController.php✅
-│   │   │   │   ├── NPLReceivablesController.php✅
-│   │   │   │   ├── SHUDistributionController.php✅
-│   │   │   │   ├── BudgetPlanController.php✅
-│   │   │   │   └── NotesToFinancialController.php✅
+│   │   │   │   ├── BaseFinancialController.php           # ✅ MOVED from Services/
+│   │   │   │   ├── BalanceSheetController.php
+│   │   │   │   ├── IncomeStatementController.php
+│   │   │   │   ├── EquityChangesController.php
+│   │   │   │   ├── CashFlowController.php
+│   │   │   │   ├── MemberSavingsController.php
+│   │   │   │   ├── MemberReceivablesController.php
+│   │   │   │   ├── NPLReceivablesController.php
+│   │   │   │   ├── SHUDistributionController.php
+│   │   │   │   ├── BudgetPlanController.php
+│   │   │   │   └── NotesToFinancialController.php
 │   │   │   ├── Reports/
-│   │   │   │   ├── PDFExportController.php✅
-│   │   │   │   ├── ExcelExportController.php✅
-│   │   │   │   └── BatchExportController.php✅
+│   │   │   │   ├── PDFExportController.php
+│   │   │   │   ├── ExcelExportController.php
+│   │   │   │   └── BatchExportController.php
 │   │   │   ├── NotificationController.php
 │   │   │   └── DashboardController.php
 │   │   ├── Requests/
+│   │   │   ├── Auth/                                     # ✅ EXISTING (MISSING in README)
+│   │   │   │   └── LoginRequest.php                      # ✅ EXISTING (MISSING in README)
+│   │   │   ├── ProfileUpdateRequest.php                  # ✅ EXISTING (MISSING in README)
 │   │   │   ├── Financial/
-│   │   │   │   ├── BalanceSheetRequest.php✅
+│   │   │   │   ├── BalanceSheetRequest.php
 │   │   │   │   ├── IncomeStatementRequest.php
 │   │   │   │   ├── EquityChangesRequest.php
 │   │   │   │   ├── CashFlowRequest.php
@@ -126,7 +140,7 @@ simkop/
 │   │   ├── Middleware/
 │   │   │   ├── FinancialAuditMiddleware.php
 │   │   │   ├── RoleMiddleware.php
-│   │   │   └── CooperativeAccessMiddleware.php✅
+│   │   │   └── CooperativeAccessMiddleware.php
 │   │   └── Resources/
 │   │       ├── Financial/
 │   │       │   ├── BalanceSheetResource.php
@@ -134,30 +148,30 @@ simkop/
 │   │       │   └── [other financial resources]
 │   │       └── NotificationResource.php
 │   ├── Models/
-│   │   ├── User.php✅                     # Enhanced with roles
-│   │   ├── Cooperative.php✅              # Enhanced with relationships
-│   │   ├── Notification.php✅             # Simple notification system
-│   │   ├── AuditLog.php✅                 # Audit trail
-│   │   ├── Financial/
-│   │   │   ├── FinancialReport.php✅      # Main report model
-│   │   │   ├── BalanceSheetAccount.php✅
-│   │   │   ├── IncomeStatementAccount.php✅
-│   │   │   ├── EquityChange.php✅
-│   │   │   ├── CashFlowActivity.php✅
-│   │   │   ├── MemberSaving.php✅
-│   │   │   ├── MemberReceivable.php✅
-│   │   │   ├── NonPerformingReceivable.php✅
-│   │   │   ├── SHUDistribution.php✅
-│   │   │   └── BudgetPlan.php✅
-│   │   └── Traits/
-│   │       ├── HasAuditLog.php✅
-│   │       └── BelongsToCooperative.php✅
+│   │   ├── User.php                     # Enhanced with roles
+│   │   ├── Cooperative.php              # Enhanced with relationships
+│   │   ├── Notification.php             # Simple notification system
+│   │   ├── AuditLog.php                 # Audit trail
+│   │   └── Financial/
+│   │       ├── FinancialReport.php      # Main report model
+│   │       ├── BalanceSheetAccount.php
+│   │       ├── IncomeStatementAccount.php
+│   │       ├── EquityChange.php
+│   │       ├── CashFlowActivity.php
+│   │       ├── MemberSaving.php
+│   │       ├── MemberReceivable.php
+│   │       ├── NonPerformingReceivable.php
+│   │       ├── SHUDistribution.php
+│   │       └── BudgetPlan.php
+│   ├── Traits/                                          # ✅ CORRECTED LOCATION
+│   │   ├── HasAuditLog.php                              # ✅ EXISTING
+│   │   └── BelongsToCooperative.php                     # ✅ EXISTING
 │   ├── Services/
 │   │   ├── Financial/
 │   │   │   ├── ReportGenerationService.php
 │   │   │   ├── FinancialValidationService.php
-│   │   │   ├── BalanceSheetService.php✅
-│   │   │   ├── IncomeStatementService.php✅
+│   │   │   ├── BalanceSheetService.php
+│   │   │   ├── IncomeStatementService.php
 │   │   │   ├── EquityChangesService.php
 │   │   │   ├── CashFlowService.php
 │   │   │   └── YearOverYearComparisonService.php
@@ -165,7 +179,7 @@ simkop/
 │   │   │   ├── PDFExportService.php
 │   │   │   ├── ExcelExportService.php
 │   │   │   └── BatchExportService.php
-│   │   ├── NotificationService.php✅
+│   │   ├── NotificationService.php
 │   │   ├── AuditLogService.php
 │   │   └── DashboardAnalyticsService.php
 │   ├── Observers/
