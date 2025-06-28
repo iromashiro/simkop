@@ -19,11 +19,23 @@ return new class extends Migration
             $table->json('data')->nullable();
             $table->timestamps();
 
-            // Performance indexes
-            $table->index(['user_id', 'is_read', 'created_at']);
-            $table->index(['user_id', 'type']);
-            $table->index(['cooperative_id', 'created_at']);
-            $table->index('created_at'); // For cleanup operations
+            // Performance indexes with explicit names
+            $table->index(
+                ['user_id', 'is_read', 'created_at'],
+                'notif_user_read_created_idx'
+            );
+            $table->index(
+                ['user_id', 'type'],
+                'notif_user_type_idx'
+            );
+            $table->index(
+                ['cooperative_id', 'created_at'],
+                'notif_coop_created_idx'
+            );
+            $table->index(
+                'created_at',
+                'notif_created_idx'
+            ); // For cleanup operations
         });
     }
 

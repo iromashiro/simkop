@@ -32,8 +32,17 @@ return new class extends Migration
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 
-            $table->unique(['cooperative_id', 'reporting_year', 'account_code']);
-            $table->index(['cooperative_id', 'reporting_year', 'account_category']);
+            // Explicitly name the unique constraint to avoid conflicts
+            $table->unique(
+                ['cooperative_id', 'reporting_year', 'account_code'],
+                'isa_coop_year_code_unique'
+            );
+
+            // Explicitly name the index to avoid conflicts
+            $table->index(
+                ['cooperative_id', 'reporting_year', 'account_category'],
+                'isa_coop_year_category_idx'
+            );
         });
     }
 

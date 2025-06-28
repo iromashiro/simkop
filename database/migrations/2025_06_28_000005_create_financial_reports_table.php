@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('cooperative_id')->constrained()->onDelete('cascade');
             $table->string('report_type', 50);
             $table->integer('reporting_year');
-            $table->date('reporting_period')->default('12-31');
+            $table->date('reporting_period');
             $table->enum('status', ['draft', 'submitted', 'approved', 'rejected'])->default('draft');
             $table->json('data');
             $table->text('notes')->nullable();
