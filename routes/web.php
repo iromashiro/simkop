@@ -42,6 +42,10 @@ use Illuminate\Support\Facades\Route;
 
 // Public Routes
 Route::get('/', function () {
+    return view('guest.dashboard');
+})->name('guest.dashboard');
+
+Route::get('/login', function () {
     return redirect()->route('login');
 });
 
