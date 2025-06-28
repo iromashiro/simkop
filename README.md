@@ -85,328 +85,178 @@ simkop/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── Auth/                    # Laravel Breeze (existing)
-│   │   │   │   ├── AuthenticatedSessionController.php    # ✅ EXISTING
-│   │   │   │   ├── ConfirmablePasswordController.php     # ✅ EXISTING
+│   │   │   ├── Auth/                                     # ✅ Laravel Breeze (9/9)
+│   │   │   │   ├── AuthenticatedSessionController.php   # ✅ EXISTING
+│   │   │   │   ├── ConfirmablePasswordController.php    # ✅ EXISTING
 │   │   │   │   ├── EmailVerificationNotificationController.php # ✅ EXISTING
 │   │   │   │   ├── EmailVerificationPromptController.php # ✅ EXISTING
-│   │   │   │   ├── NewPasswordController.php             # ✅ EXISTING
-│   │   │   │   ├── PasswordController.php                # ✅ EXISTING
-│   │   │   │   ├── PasswordResetLinkController.php       # ✅ EXISTING
-│   │   │   │   ├── RegisteredUserController.php          # ✅ EXISTING
-│   │   │   │   └── VerifyEmailController.php             # ✅ EXISTING
-│   │   │   ├── ProfileController.php                     # ✅ EXISTING (MISSING in README)
-│   │   │   ├── Admin/
-│   │   │   │   ├── CooperativeController.php
-│   │   │   │   ├── UserManagementController.php
-│   │   │   │   ├── DashboardController.php
-│   │   │   │   └── ReportApprovalController.php
-│   │   │   ├── Financial/
-│   │   │   │   ├── BaseFinancialController.php           # ✅ MOVED from Services/
-│   │   │   │   ├── BalanceSheetController.php
-│   │   │   │   ├── IncomeStatementController.php
-│   │   │   │   ├── EquityChangesController.php
-│   │   │   │   ├── CashFlowController.php
-│   │   │   │   ├── MemberSavingsController.php
-│   │   │   │   ├── MemberReceivablesController.php
-│   │   │   │   ├── NPLReceivablesController.php
-│   │   │   │   ├── SHUDistributionController.php
-│   │   │   │   ├── BudgetPlanController.php
-│   │   │   │   └── NotesToFinancialController.php
-│   │   │   ├── Reports/
-│   │   │   │   ├── PDFExportController.php
-│   │   │   │   ├── ExcelExportController.php
-│   │   │   │   └── BatchExportController.php
-│   │   │   ├── NotificationController.php
-│   │   │   └── DashboardController.php
+│   │   │   │   ├── NewPasswordController.php            # ✅ EXISTING
+│   │   │   │   ├── PasswordController.php               # ✅ EXISTING
+│   │   │   │   ├── PasswordResetLinkController.php      # ✅ EXISTING
+│   │   │   │   ├── RegisteredUserController.php         # ✅ EXISTING
+│   │   │   │   └── VerifyEmailController.php            # ✅ EXISTING
+│   │   │   ├── ProfileController.php                    # ✅ EXISTING
+│   │   │   ├── Admin/                                   # ✅ COMPLETE (4/4)
+│   │   │   │   ├── CooperativeController.php            # ✅ EXISTING
+│   │   │   │   ├── UserManagementController.php         # ✅ EXISTING
+│   │   │   │   ├── DashboardController.php              # ✅ EXISTING
+│   │   │   │   └── ReportApprovalController.php         # ✅ EXISTING
+│   │   │   ├── Financial/                               # ✅ COMPLETE (11/11)
+│   │   │   │   ├── BaseFinancialController.php          # ✅ EXISTING
+│   │   │   │   ├── BalanceSheetController.php           # ✅ EXISTING
+│   │   │   │   ├── IncomeStatementController.php        # ✅ EXISTING
+│   │   │   │   ├── EquityChangesController.php          # ✅ EXISTING
+│   │   │   │   ├── CashFlowController.php               # ✅ EXISTING
+│   │   │   │   ├── MemberSavingsController.php          # ✅ EXISTING
+│   │   │   │   ├── MemberReceivablesController.php      # ✅ EXISTING
+│   │   │   │   ├── NPLReceivablesController.php         # ✅ EXISTING
+│   │   │   │   ├── SHUDistributionController.php        # ✅ EXISTING
+│   │   │   │   ├── BudgetPlanController.php             # ✅ EXISTING
+│   │   │   │   └── NotesToFinancialController.php       # ✅ EXISTING
+│   │   │   ├── Reports/                                 # ✅ COMPLETE (3/3)
+│   │   │   │   ├── PDFExportController.php              # ✅ CREATED
+│   │   │   │   ├── ExcelExportController.php            # ✅ CREATED
+│   │   │   │   └── BatchExportController.php            # ✅ CREATED
+│   │   │   ├── NotificationController.php               # ✅ EXISTING
+│   │   │   └── DashboardController.php                  # ✅ EXISTING
 │   │   ├── Requests/
-│   │   │   ├── Auth/                                     # ✅ EXISTING (MISSING in README)
-│   │   │   │   └── LoginRequest.php                      # ✅ EXISTING (MISSING in README)
-│   │   │   ├── ProfileUpdateRequest.php                  # ✅ EXISTING (MISSING in README)
-│   │   │   ├── Financial/
-│   │   │   │   ├── BalanceSheetRequest.php
-│   │   │   │   ├── IncomeStatementRequest.php
-│   │   │   │   ├── EquityChangesRequest.php
-│   │   │   │   ├── CashFlowRequest.php
-│   │   │   │   ├── MemberSavingsRequest.php
-│   │   │   │   ├── MemberReceivablesRequest.php
-│   │   │   │   ├── NPLReceivablesRequest.php
-│   │   │   │   ├── SHUDistributionRequest.php
-│   │   │   │   └── BudgetPlanRequest.php
-│   │   │   ├── Admin/
-│   │   │   │   ├── CooperativeRequest.php
-│   │   │   │   └── UserManagementRequest.php
-│   │   │   └── NotificationRequest.php
-│   │   ├── Middleware/
-│   │   │   ├── FinancialAuditMiddleware.php
-│   │   │   ├── RoleMiddleware.php
-│   │   │   └── CooperativeAccessMiddleware.php
-│   │   └── Resources/
-│   │       ├── Financial/
-│   │       │   ├── BalanceSheetResource.php
-│   │       │   ├── IncomeStatementResource.php
-│   │       │   └── [other financial resources]
-│   │       └── NotificationResource.php
-│   ├── Models/
-│   │   ├── User.php                     # Enhanced with roles
-│   │   ├── Cooperative.php              # Enhanced with relationships
-│   │   ├── Notification.php             # Simple notification system
-│   │   ├── AuditLog.php                 # Audit trail
-│   │   └── Financial/
-│   │       ├── FinancialReport.php      # Main report model
-│   │       ├── BalanceSheetAccount.php
-│   │       ├── IncomeStatementAccount.php
-│   │       ├── EquityChange.php
-│   │       ├── CashFlowActivity.php
-│   │       ├── MemberSaving.php
-│   │       ├── MemberReceivable.php
-│   │       ├── NonPerformingReceivable.php
-│   │       ├── SHUDistribution.php
-│   │       └── BudgetPlan.php
-│   ├── Traits/                                          # ✅ CORRECTED LOCATION
+│   │   │   ├── Auth/                                    # ✅ EXISTING (1/1)
+│   │   │   │   └── LoginRequest.php                     # ✅ EXISTING
+│   │   │   ├── ProfileUpdateRequest.php                 # ✅ EXISTING
+│   │   │   ├── Financial/                               # ❌ MISSING (0/9)
+│   │   │   │   ├── BalanceSheetRequest.php              # ❌ TODO
+│   │   │   │   ├── IncomeStatementRequest.php           # ❌ TODO
+│   │   │   │   ├── EquityChangesRequest.php             # ❌ TODO
+│   │   │   │   ├── CashFlowRequest.php                  # ❌ TODO
+│   │   │   │   ├── MemberSavingsRequest.php             # ❌ TODO
+│   │   │   │   ├── MemberReceivablesRequest.php         # ❌ TODO
+│   │   │   │   ├── NPLReceivablesRequest.php            # ❌ TODO
+│   │   │   │   ├── SHUDistributionRequest.php           # ❌ TODO
+│   │   │   │   └── BudgetPlanRequest.php                # ❌ TODO
+│   │   │   ├── Admin/                                   # ❌ MISSING (0/2)
+│   │   │   │   ├── CooperativeRequest.php               # ❌ TODO
+│   │   │   │   └── UserManagementRequest.php            # ❌ TODO
+│   │   │   └── NotificationRequest.php                  # ❌ TODO
+│   │   ├── Middleware/                                  # ❌ MISSING (0/3)
+│   │   │   ├── FinancialAuditMiddleware.php             # ❌ TODO
+│   │   │   ├── RoleMiddleware.php                       # ❌ TODO
+│   │   │   └── CooperativeAccessMiddleware.php          # ❌ TODO
+│   │   └── Resources/                                   # ❌ MISSING (0/11+)
+│   │       ├── Financial/                               # ❌ TODO
+│   │       │   ├── BalanceSheetResource.php             # ❌ TODO
+│   │       │   ├── IncomeStatementResource.php          # ❌ TODO
+│   │       │   └── [other financial resources]          # ❌ TODO
+│   │       └── NotificationResource.php                 # ❌ TODO
+│   ├── Models/                                          # ✅ COMPLETE (14/14)
+│   │   ├── User.php                                     # ✅ EXISTING
+│   │   ├── Cooperative.php                              # ✅ EXISTING
+│   │   ├── Notification.php                             # ✅ EXISTING
+│   │   ├── AuditLog.php                                 # ✅ EXISTING
+│   │   └── Financial/                                   # ✅ COMPLETE (10/10)
+│   │       ├── FinancialReport.php                      # ✅ EXISTING
+│   │       ├── BalanceSheetAccount.php                  # ✅ EXISTING
+│   │       ├── IncomeStatementAccount.php               # ✅ EXISTING
+│   │       ├── EquityChange.php                         # ✅ EXISTING
+│   │       ├── CashFlowActivity.php                     # ✅ EXISTING
+│   │       ├── MemberSaving.php                         # ✅ EXISTING
+│   │       ├── MemberReceivable.php                     # ✅ EXISTING
+│   │       ├── NonPerformingReceivable.php              # ✅ EXISTING
+│   │       ├── SHUDistribution.php                      # ✅ EXISTING
+│   │       └── BudgetPlan.php                           # ✅ EXISTING
+│   ├── Traits/                                          # ✅ COMPLETE (2/2)
 │   │   ├── HasAuditLog.php                              # ✅ EXISTING
 │   │   └── BelongsToCooperative.php                     # ✅ EXISTING
-│   ├── Services/
-│   │   ├── Financial/
-│   │   │   ├── ReportGenerationService.php
-│   │   │   ├── FinancialValidationService.php
-│   │   │   ├── BalanceSheetService.php
-│   │   │   ├── IncomeStatementService.php
-│   │   │   ├── EquityChangesService.php
-│   │   │   ├── CashFlowService.php
-│   │   │   └── YearOverYearComparisonService.php
-│   │   ├── Export/
-│   │   │   ├── PDFExportService.php
-│   │   │   ├── ExcelExportService.php
-│   │   │   └── BatchExportService.php
-│   │   ├── NotificationService.php
-│   │   ├── AuditLogService.php
-│   │   └── DashboardAnalyticsService.php
-│   ├── Observers/
-│   │   ├── FinancialReportObserver.php
-│   │   └── UserObserver.php
-│   ├── Jobs/
-│   │   ├── GenerateReportPDF.php
-│   │   ├── BatchExportReports.php
-│   │   └── SendNotification.php
-│   ├── Rules/
-│   │   ├── BalanceSheetEquation.php
-│   │   ├── CashFlowConsistency.php
-│   │   └── FinancialDataIntegrity.php
-│   └── Providers/
-│       ├── AppServiceProvider.php       # Enhanced
-│       ├── AuthServiceProvider.php      # Enhanced with permissions
-│       └── EventServiceProvider.php     # Enhanced with observers
-├── database/
-│   ├── migrations/
-│   │   ├── 0001_01_01_000000_create_users_table.php✅           # Existing
-│   │   ├── 0001_01_01_000001_create_cache_table.php✅           # Existing
-│   │   ├── 0001_01_01_000002_create_jobs_table.php✅            # Existing
-│   │   ├── 2025_06_27_200416_create_permission_tables.php✅     # Existing
-│   │   ├── 2025_06_28_000001_create_cooperatives_table.php✅
-│   │   ├── 2025_06_28_000002_add_cooperative_id_to_users_table.php✅
-│   │   ├── 2025_06_28_000003_create_notifications_table.php✅
-│   │   ├── 2025_06_28_000004_create_audit_logs_table.php✅
-│   │   ├── 2025_06_28_000005_create_financial_reports_table.php✅
-│   │   ├── 2025_06_28_000006_create_balance_sheet_accounts_table.php✅
-│   │   ├── 2025_06_28_000007_create_income_statement_accounts_table.php✅
-│   │   ├── 2025_06_28_000008_create_equity_changes_table.php✅
-│   │   ├── 2025_06_28_000009_create_cash_flow_activities_table.php✅
-│   │   ├── 2025_06_28_000010_create_member_savings_table.php✅
-│   │   ├── 2025_06_28_000011_create_member_receivables_table.php✅
-│   │   ├── 2025_06_28_000012_create_non_performing_receivables_table.php✅
-│   │   ├── 2025_06_28_000013_create_shu_distribution_table.php✅
-│   │   ├── 2025_06_28_000014_create_budget_plans_table.php✅
-│   │   └── 2025_06_28_000015_create_indexes.php
-│   ├── seeders/
-│   │   ├── DatabaseSeeder.php✅
-│   │   ├── AdminDinasSeeder.php
-│   │   ├── RolePermissionSeeder.ph✅
-│   │   ├── CooperativeSeeder.php✅
-│   │   └── SampleDataSeeder.php✅
-│   └── factories/
-│       ├── CooperativeFactory.php
-│       └── Financial/
-│           ├── BalanceSheetAccountFactory.php
-│           └── [other factories for testing]
-├── resources/
-│   ├── views/
-│   │   ├── layouts/
-│   │   │   ├── app.blade.php            # Enhanced with notifications
-│   │   │   ├── guest.blade.php          # Existing
-│   │   │   └── navigation.blade.php     # Enhanced with role-based menu
-│   │   ├── dashboard/
-│   │   │   ├── admin-dinas.blade.php
-│   │   │   └── admin-koperasi.blade.php
-│   │   ├── admin/
-│   │   │   ├── cooperatives/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   ├── edit.blade.php
-│   │   │   │   └── show.blade.php
-│   │   │   ├── users/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   └── edit.blade.php
-│   │   │   └── reports/
-│   │   │       ├── approval.blade.php
-│   │   │       └── analytics.blade.php
-│   │   ├── financial/
-│   │   │   ├── balance-sheet/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   └── edit.blade.php
-│   │   │   ├── income-statement/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   └── edit.blade.php
-│   │   │   ├── equity-changes/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   └── edit.blade.php
-│   │   │   ├── cash-flow/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   └── edit.blade.php
-│   │   │   ├── member-savings/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   └── edit.blade.php
-│   │   │   ├── member-receivables/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   └── edit.blade.php
-│   │   │   ├── npl-receivables/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   └── edit.blade.php
-│   │   │   ├── shu-distribution/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   └── edit.blade.php
-│   │   │   ├── budget-plan/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   ├── create.blade.php
-│   │   │   │   └── edit.blade.php
-│   │   │   └── notes/
-│   │   │       ├── index.blade.php
-│   │   │       ├── create.blade.php
-│   │   │       └── edit.blade.php
-│   │   ├── reports/
-│   │   │   ├── pdf/
-│   │   │   │   ├── balance_sheet.blade.php
-│   │   │   │   ├── income_statement.blade.php
-│   │   │   │   ├── equity_changes.blade.php
-│   │   │   │   ├── cash_flow.blade.php
-│   │   │   │   ├── member_savings.blade.php
-│   │   │   │   ├── member_receivables.blade.php
-│   │   │   │   ├── npl_receivables.blade.php
-│   │   │   │   ├── shu_distribution.blade.php
-│   │   │   │   ├── budget_plan.blade.php
-│   │   │   │   ├── notes_to_financial.blade.php
-│   │   │   │   └── complete_report.blade.php
-│   │   │   ├── export/
-│   │   │   │   ├── index.blade.php
-│   │   │   │   └── batch.blade.php
-│   │   │   └── preview/
-│   │   │       ├── balance_sheet.blade.php
-│   │   │       ├── income_statement.blade.php
-│   │   │       └── [other preview templates]
-│   │   ├── notifications/
-│   │   │   ├── index.blade.php
-│   │   │   └── partials/
-│   │   │       ├── notification-bell.blade.php
-│   │   │       └── notification-item.blade.php
-│   │   ├── components/
-│   │   │   ├── financial/
-│   │   │   │   ├── account-input.blade.php
-│   │   │   │   ├── amount-input.blade.php
-│   │   │   │   ├── year-comparison.blade.php
-│   │   │   │   └── validation-errors.blade.php
-│   │   │   ├── forms/
-│   │   │   │   ├── text-input.blade.php
-│   │   │   │   ├── select-input.blade.php
-│   │   │   │   └── textarea-input.blade.php
-│   │   │   └── ui/
-│   │   │       ├── alert.blade.php
-│   │   │       ├── modal.blade.php
-│   │   │       └── loading-spinner.blade.php
-│   │   └── auth/                        # Existing Laravel Breeze
-│   ├── css/
-│   │   ├── app.css                      # Enhanced with custom styles
-│   │   └── financial-forms.css          # Specific styling for forms
-│   └── js/
-│       ├── app.js                       # Enhanced with Alpine.js
-│       ├── financial-forms.js           # Form interactions
-│       ├── notifications.js             # Notification handling
-│       └── dashboard-charts.js          # Dashboard analytics
-├── routes/
-│   ├── web.php                          # Enhanced with all routes
-│   ├── auth.php                         # Existing Laravel Breeze
-│   └── api.php                          # For AJAX endpoints
-├── config/
-│   ├── app.php                          # Enhanced
-│   ├── database.php                     # PostgreSQL config
-│   ├── permission.php                   # Spatie permission config
-│   ├── dompdf.php                       # PDF generation config
-│   └── excel.php                        # Excel export config
-├── storage/
-│   ├── app/
-│   │   ├── public/
-│   │   │   ├── exports/                 # Generated reports
-│   │   │   └── logos/                   # Cooperative logos
-│   │   ├── exports/                     # Temporary export files
-│   │   └── logs/                        # Application logs
-│   ├── framework/
-│   └── logs/
-├── tests/
-│   ├── Feature/
-│   │   ├── Auth/                        # Existing
-│   │   ├── Admin/
-│   │   │   ├── CooperativeManagementTest.php
-│   │   │   └── UserManagementTest.php
-│   │   ├── Financial/
-│   │   │   ├── BalanceSheetTest.php
-│   │   │   ├── IncomeStatementTest.php
-│   │   │   ├── EquityChangesTest.php
-│   │   │   ├── CashFlowTest.php
-│   │   │   ├── MemberSavingsTest.php
-│   │   │   ├── MemberReceivablesTest.php
-│   │   │   ├── NPLReceivablesTest.php
-│   │   │   ├── SHUDistributionTest.php
-│   │   │   └── BudgetPlanTest.php
-│   │   ├── Reports/
-│   │   │   ├── PDFExportTest.php
-│   │   │   ├── ExcelExportTest.php
-│   │   │   └── BatchExportTest.php
-│   │   ├── NotificationTest.php
-│   │   └── DashboardTest.php
-│   ├── Unit/
-│   │   ├── Models/
-│   │   │   ├── UserTest.php
-│   │   │   ├── CooperativeTest.php
-│   │   │   └── Financial/
-│   │   │       ├── BalanceSheetAccountTest.php
-│   │   │       └── [other model tests]
-│   │   ├── Services/
-│   │   │   ├── ReportGenerationServiceTest.php
-│   │   │   ├── FinancialValidationServiceTest.php
-│   │   │   └── NotificationServiceTest.php
-│   │   └── Rules/
-│   │       ├── BalanceSheetEquationTest.php
-│   │       └── CashFlowConsistencyTest.php
-│   └── TestCase.php
-├── docs/                                # Documentation
-│   ├── SAD.md                           # System Architecture Design
-│   ├── SRS.md                           # System Requirements Specification
-│   ├── API.md                           # API Documentation
-│   ├── DEPLOYMENT.md                    # Deployment Guide
-│   └── USER_MANUAL.md                   # User Manual
-├── .env.example                         # Enhanced with all configs
-├── composer.json                        # Enhanced with required packages
-├── package.json                         # Enhanced with frontend deps
-├── artisan                              # Enhanced with custom commands
-└── README.md                            # Project documentation
+│   ├── Services/                                        # ⚠️ PARTIAL (5/13)
+│   │   ├── Financial/                                   # ⚠️ PARTIAL (3/7)
+│   │   │   ├── BaseFinancialController.php              # ⚠️ WRONG LOCATION (should be in Controllers/)
+│   │   │   ├── ReportGenerationService.php              # ❌ TODO
+│   │   │   ├── FinancialValidationService.php           # ❌ TODO
+│   │   │   ├── BalanceSheetService.php                  # ✅ EXISTING
+│   │   │   ├── IncomeStatementService.php               # ✅ EXISTING (stub)
+│   │   │   ├── EquityChangesService.php                 # ❌ TODO
+│   │   │   ├── CashFlowService.php                      # ❌ TODO
+│   │   │   └── YearOverYearComparisonService.php        # ❌ TODO
+│   │   ├── Export/                                      # ❌ MISSING (0/3)
+│   │   │   ├── PDFExportService.php                     # ❌ TODO
+│   │   │   ├── ExcelExportService.php                   # ❌ TODO
+│   │   │   └── BatchExportService.php                   # ❌ TODO
+│   │   ├── NotificationService.php                      # ✅ EXISTING
+│   │   ├── AuditLogService.php                          # ✅ EXISTING
+│   │   └── DashboardAnalyticsService.php                # ❌ TODO
+│   ├── Observers/                                       # ❌ MISSING (0/2)
+│   │   ├── FinancialReportObserver.php                  # ❌ TODO
+│   │   └── UserObserver.php                             # ❌ TODO
+│   ├── Jobs/                                            # ❌ MISSING (0/3)
+│   │   ├── GenerateReportPDF.php                        # ❌ TODO
+│   │   ├── BatchExportReports.php                       # ❌ TODO
+│   │   └── SendNotification.php                         # ❌ TODO
+│   ├── Rules/                                           # ❌ MISSING (0/3)
+│   │   ├── BalanceSheetEquation.php                     # ❌ TODO
+│   │   ├── CashFlowConsistency.php                      # ❌ TODO
+│   │   └── FinancialDataIntegrity.php                   # ❌ TODO
+│   └── Providers/                                       # ✅ COMPLETE (3/3)
+│       ├── AppServiceProvider.php                       # ✅ EXISTING
+│       ├── AuthServiceProvider.php                      # ✅ EXISTING
+│       └── EventServiceProvider.php                     # ✅ EXISTING
+├── database/                                            # ✅ COMPLETE
+│   ├── migrations/                                      # ✅ ALL EXISTING
+│   │   ├── 0001_01_01_000000_create_users_table.php    # ✅ EXISTING
+│   │   ├── 0001_01_01_000001_create_cache_table.php    # ✅ EXISTING
+│   │   ├── 0001_01_01_000002_create_jobs_table.php     # ✅ EXISTING
+│   │   ├── 2025_06_27_200416_create_permission_tables.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000001_create_cooperatives_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000002_add_cooperative_id_to_users_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000003_create_notifications_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000004_create_audit_logs_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000005_create_financial_reports_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000006_create_balance_sheet_accounts_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000007_create_income_statement_accounts_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000008_create_equity_changes_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000009_create_cash_flow_activities_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000010_create_member_savings_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000011_create_member_receivables_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000012_create_non_performing_receivables_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000013_create_shu_distribution_table.php # ✅ EXISTING
+│   │   ├── 2025_06_28_000014_create_budget_plans_table.php # ✅ EXISTING
+│   │   └── 2025_06_28_000015_create_indexes.php         # ✅ EXISTING
+│   ├── seeders/                                         # ✅ EXISTING
+│   │   ├── DatabaseSeeder.php                           # ✅ EXISTING
+│   │   ├── AdminDinasSeeder.php                         # ✅ EXISTING
+│   │   ├── RolePermissionSeeder.php                     # ✅ EXISTING
+│   │   ├── CooperativeSeeder.php                        # ✅ EXISTING
+│   │   └── SampleDataSeeder.php                         # ✅ EXISTING
+│   └── factories/                                       # ✅ EXISTING
+│       ├── CooperativeFactory.php                       # ✅ EXISTING
+│       └── Financial/                                   # ✅ EXISTING
+│           ├── BalanceSheetAccountFactory.php           # ✅ EXISTING
+│           └── [other factories for testing]            # ✅ EXISTING
+├── resources/                                           # ❌ VIEWS MISSING
+│   ├── views/                                           # ❌ TODO (30+ files)
+│   │   ├── layouts/                                     # ❌ TODO
+│   │   ├── dashboard/                                   # ❌ TODO
+│   │   ├── admin/                                       # ❌ TODO
+│   │   ├── financial/                                   # ❌ TODO
+│   │   ├── reports/                                     # ❌ TODO
+│   │   ├── notifications/                               # ❌ TODO
+│   │   └── components/                                  # ❌ TODO
+│   ├── css/                                             # ❌ TODO
+│   └── js/                                              # ❌ TODO
+├── routes/                                              # ⚠️ PARTIAL
+│   ├── web.php                                          # ⚠️ NEEDS ENHANCEMENT
+│   ├── auth.php                                         # ✅ EXISTING
+│   └── api.php                                          # ⚠️ NEEDS ENHANCEMENT
+├── config/                                              # ✅ EXISTING
+├── storage/                                             # ✅ EXISTING
+├── tests/                                               # ❌ MISSING (20+ files)
+├── docs/                                                # ✅ EXISTING
+│   ├── SAD.md                                           # ✅ EXISTING
+│   ├── SRS.md                                           # ✅ EXISTING
+│   └── [other docs]                                     # ✅ EXISTING
+├── .env.example                                         # ✅ EXISTING
+├── composer.json                                        # ✅ EXISTING
+├── package.json                                         # ✅ EXISTING
+├── artisan                                              # ✅ EXISTING
+└── README.md                                            # ✅ THIS FILE
 ```
 
 ## Instalasi
