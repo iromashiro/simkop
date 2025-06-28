@@ -6,7 +6,7 @@
 -   [Fitur](#fitur)
 -   [Tech Stack](#tech-stack)
 -   [Requirements](#requirements)
--   [Direktori] (#direktori)
+-   [Direktori](#direktori)
 -   [Instalasi](#instalasi)
 -   [Konfigurasi](#konfigurasi)
 -   [Struktur Database](#struktur-database)
