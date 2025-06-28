@@ -8,47 +8,55 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CooperativeAccessMiddleware
 {
+    /**
+     * Handle an incoming request.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         if (!auth()->check()) {
-            return redirect()->route('login');
+            return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
         }
 
         $user = auth()->user();
 
-        // Admin Dinas can access all cooperatives
-        if ($user->isAdminDinas()) {
+        // Admin dinas can access all cooperatives
+        if ($user->hasRole('admin_dinas')) {
             return $next($request);
         }
 
-        // Admin Koperasi can only access their own cooperative
-        if ($user->isAdminKoperasi()) {
-            $cooperativeId = $this->getCooperativeIdFromRequest($request);
+        // Admin koperasi can only access their own cooperative
+        if ($user->hasRole('admin_koperasi')) {
+            $cooperativeId = $this->extractCooperativeId($request);
 
-            if ($cooperativeId && $user->cooperative_id != $cooperativeId) {
-                abort(403, 'Anda tidak memiliki akses ke data koperasi ini.');
+            if ($cooperativeId && $cooperativeId != $user->cooperative_id) {
+                abort(403, 'Anda tidak memiliki akses ke koperasi ini.');
             }
         }
 
         return $next($request);
     }
 
-    private function getCooperativeIdFromRequest(Request $request): ?int
+    /**
+     * Extract cooperative ID from request.
+     */
+    private function extractCooperativeId(Request $request): ?int
     {
-        // Try to get cooperative_id from route parameters
-        $routeParams = $request->route()?->parameters() ?? [];
-
-        if (isset($routeParams['cooperative'])) {
-            return (int) $routeParams['cooperative'];
+        // Check route parameters
+        if ($request->route('cooperative')) {
+            return (int) $request->route('cooperative');
         }
 
-        // Try to get from query parameters
-        if ($request->has('cooperative_id')) {
-            return (int) $request->get('cooperative_id');
+        if ($request->route('cooperative_id')) {
+            return (int) $request->route('cooperative_id');
         }
 
-        // Try to get from form data
-        if ($request->has('cooperative_id')) {
+        // Check query parameters
+        if ($request->query('cooperative_id')) {
+            return (int) $request->query('cooperative_id');
+        }
+
+        // Check form data
+        if ($request->input('cooperative_id')) {
             return (int) $request->input('cooperative_id');
         }
 

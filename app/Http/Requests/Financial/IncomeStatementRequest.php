@@ -5,7 +5,7 @@ namespace App\Http\Requests\Financial;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class BalanceSheetRequest extends FormRequest
+class IncomeStatementRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -28,8 +28,8 @@ class BalanceSheetRequest extends FormRequest
                 'max:' . (now()->year + 1),
                 Rule::unique('financial_reports')
                     ->where('cooperative_id', $this->user()->cooperative_id)
-                    ->where('report_type', 'balance_sheet')
-                    ->ignore($this->route('balance_sheet'))
+                    ->where('report_type', 'income_statement')
+                    ->ignore($this->route('income_statement'))
             ],
             'reporting_period' => [
                 'required',
@@ -43,7 +43,7 @@ class BalanceSheetRequest extends FormRequest
             ],
             'notes' => 'nullable|string|max:5000',
 
-            // Balance Sheet Accounts
+            // Income Statement Accounts
             'accounts' => 'required|array|min:1',
             'accounts.*.account_code' => [
                 'required',
@@ -55,19 +55,17 @@ class BalanceSheetRequest extends FormRequest
             'accounts.*.account_category' => [
                 'required',
                 'string',
-                'in:asset,liability,equity'
+                'in:revenue,expense,other_income,other_expense'
             ],
             'accounts.*.account_subcategory' => 'nullable|string|max:100',
             'accounts.*.current_year_amount' => [
                 'required',
                 'numeric',
-                'min:0',
                 'max:999999999999.99'
             ],
             'accounts.*.previous_year_amount' => [
                 'nullable',
                 'numeric',
-                'min:0',
                 'max:999999999999.99'
             ],
             'accounts.*.note_reference' => 'nullable|string|max:50',
@@ -93,7 +91,7 @@ class BalanceSheetRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'reporting_year.unique' => 'Laporan neraca untuk tahun ini sudah ada.',
+            'reporting_year.unique' => 'Laporan laba rugi untuk tahun ini sudah ada.',
             'reporting_year.min' => 'Tahun pelaporan tidak boleh kurang dari 2020.',
             'reporting_year.max' => 'Tahun pelaporan tidak boleh lebih dari tahun depan.',
             'accounts.required' => 'Minimal harus ada satu akun.',
@@ -101,10 +99,9 @@ class BalanceSheetRequest extends FormRequest
             'accounts.*.account_code.regex' => 'Kode akun hanya boleh mengandung huruf besar, angka, tanda hubung, dan titik.',
             'accounts.*.account_name.required' => 'Nama akun wajib diisi.',
             'accounts.*.account_category.required' => 'Kategori akun wajib dipilih.',
-            'accounts.*.account_category.in' => 'Kategori akun harus salah satu dari: Aset, Kewajiban, atau Ekuitas.',
+            'accounts.*.account_category.in' => 'Kategori akun harus salah satu dari: Pendapatan, Beban, Pendapatan Lain, atau Beban Lain.',
             'accounts.*.current_year_amount.required' => 'Jumlah tahun berjalan wajib diisi.',
             'accounts.*.current_year_amount.numeric' => 'Jumlah tahun berjalan harus berupa angka.',
-            'accounts.*.current_year_amount.min' => 'Jumlah tidak boleh negatif.',
             'accounts.*.current_year_amount.max' => 'Jumlah terlalu besar.',
             'cooperative_id.required' => 'Koperasi wajib dipilih.',
             'cooperative_id.exists' => 'Koperasi tidak ditemukan.'
@@ -117,57 +114,15 @@ class BalanceSheetRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Validate balance sheet equation: Assets = Liabilities + Equity
-            $this->validateBalanceSheetEquation($validator);
-
             // Validate account code uniqueness within the request
             $this->validateAccountCodeUniqueness($validator);
 
             // Validate parent-child relationships
             $this->validateParentChildRelationships($validator);
+
+            // Validate income statement logic
+            $this->validateIncomeStatementLogic($validator);
         });
-    }
-
-    /**
-     * Validate balance sheet equation.
-     */
-    private function validateBalanceSheetEquation($validator): void
-    {
-        $accounts = $this->input('accounts', []);
-
-        $totalAssets = 0;
-        $totalLiabilities = 0;
-        $totalEquity = 0;
-
-        foreach ($accounts as $account) {
-            if (!isset($account['is_subtotal']) || !$account['is_subtotal']) {
-                $amount = (float) ($account['current_year_amount'] ?? 0);
-
-                switch ($account['account_category'] ?? '') {
-                    case 'asset':
-                        $totalAssets += $amount;
-                        break;
-                    case 'liability':
-                        $totalLiabilities += $amount;
-                        break;
-                    case 'equity':
-                        $totalEquity += $amount;
-                        break;
-                }
-            }
-        }
-
-        $difference = abs($totalAssets - ($totalLiabilities + $totalEquity));
-
-        // Allow small rounding differences (1 rupiah)
-        if ($difference > 1) {
-            $validator->errors()->add(
-                'balance_equation',
-                "Neraca tidak seimbang. Total Aset: Rp " . number_format($totalAssets, 2) .
-                    ", Total Kewajiban + Ekuitas: Rp " . number_format($totalLiabilities + $totalEquity, 2) .
-                    ". Selisih: Rp " . number_format($difference, 2)
-            );
-        }
     }
 
     /**
@@ -216,6 +171,44 @@ class BalanceSheetRequest extends FormRequest
     }
 
     /**
+     * Validate income statement logic.
+     */
+    private function validateIncomeStatementLogic($validator): void
+    {
+        $accounts = $this->input('accounts', []);
+
+        $hasRevenue = false;
+        $hasExpense = false;
+
+        foreach ($accounts as $account) {
+            if (!isset($account['is_subtotal']) || !$account['is_subtotal']) {
+                switch ($account['account_category'] ?? '') {
+                    case 'revenue':
+                        $hasRevenue = true;
+                        break;
+                    case 'expense':
+                        $hasExpense = true;
+                        break;
+                }
+            }
+        }
+
+        if (!$hasRevenue) {
+            $validator->errors()->add(
+                'accounts',
+                'Laporan laba rugi harus memiliki minimal satu akun pendapatan.'
+            );
+        }
+
+        if (!$hasExpense) {
+            $validator->errors()->add(
+                'accounts',
+                'Laporan laba rugi harus memiliki minimal satu akun beban.'
+            );
+        }
+    }
+
+    /**
      * Get validated data with additional processing.
      */
     public function validated($key = null, $default = null): array
@@ -228,7 +221,7 @@ class BalanceSheetRequest extends FormRequest
         }
 
         // Set report_type
-        $validated['report_type'] = 'balance_sheet';
+        $validated['report_type'] = 'income_statement';
 
         // Set default status
         if (!isset($validated['status'])) {
