@@ -2,278 +2,360 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Models\Financial\FinancialReport;
-use App\Services\NotificationService;
 use App\Services\AuditLogService;
+use App\Services\NotificationService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class ReportApprovalController extends Controller
 {
     public function __construct(
-        private NotificationService $notificationService,
-        private AuditLogService $auditLogService
+        private AuditLogService $auditLogService,
+        private NotificationService $notificationService
     ) {
         $this->middleware('auth');
         $this->middleware('role:admin_dinas');
-        $this->middleware('can:approve_reports');
     }
 
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         try {
             $status = $request->get('status', 'submitted');
-            $type = $request->get('type');
             $year = $request->get('year');
             $cooperative = $request->get('cooperative');
+            $reportType = $request->get('report_type');
+            $search = $request->get('search');
             $perPage = min($request->get('per_page', 15), 50);
 
-            $reports = FinancialReport::with(['cooperative:id,name', 'creator:id,name'])
+            $reports = FinancialReport::query()
+                ->with(['cooperative:id,name,code'])
                 ->when($status, function ($query, $status) {
-                    $query->where('status', $status);
-                })
-                ->when($type, function ($query, $type) {
-                    $query->where('report_type', $type);
+                    return $query->where('status', $status);
                 })
                 ->when($year, function ($query, $year) {
-                    $query->where('reporting_year', $year);
+                    return $query->where('reporting_year', $year);
                 })
                 ->when($cooperative, function ($query, $cooperative) {
-                    $query->where('cooperative_id', $cooperative);
+                    return $query->where('cooperative_id', $cooperative);
                 })
-                ->orderBy('submitted_at', 'asc')
+                ->when($reportType, function ($query, $reportType) {
+                    return $query->where('report_type', $reportType);
+                })
+                ->when($search, function ($query, $search) {
+                    // ✅ SECURITY FIX: Proper search sanitization
+                    $sanitizedSearch = str_replace(['%', '_'], ['\%', '\_'], $search);
+                    return $query->whereHas('cooperative', function ($q) use ($sanitizedSearch) {
+                        $q->where('name', 'ILIKE', "%{$sanitizedSearch}%")
+                            ->orWhere('code', 'ILIKE', "%{$sanitizedSearch}%");
+                    });
+                })
+                ->orderBy('created_at', 'desc')
                 ->paginate($perPage);
 
             $cooperatives = \App\Models\Cooperative::select('id', 'name')->orderBy('name')->get();
-            $reportTypes = FinancialReport::select('report_type')->distinct()->pluck('report_type');
-            $years = FinancialReport::selectRaw('DISTINCT reporting_year')->orderBy('reporting_year', 'desc')->pluck('reporting_year');
+            $years = FinancialReport::distinct()->pluck('reporting_year')->sort()->values();
+            $reportTypes = FinancialReport::distinct()->pluck('report_type')->sort()->values();
 
-            return view('admin.report-approval.index', compact(
+            return view('admin.reports.approval', compact(
                 'reports',
                 'cooperatives',
-                'reportTypes',
                 'years',
+                'reportTypes',
                 'status',
-                'type',
                 'year',
-                'cooperative'
+                'cooperative',
+                'reportType',
+                'search'
             ));
         } catch (\Exception $e) {
-            Log::error('Error loading report approval index', [
+            Log::error('Error loading reports for approval', [
                 'user_id' => auth()->id(),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-            return redirect()->route('admin.dashboard')
-                ->with('error', 'Terjadi kesalahan saat memuat data persetujuan laporan.');
+            return redirect()->back()
+                ->with('error', 'Gagal memuat data laporan. Silakan coba lagi.');
         }
     }
 
-    public function show(FinancialReport $report)
+    public function show(FinancialReport $report): View
     {
         try {
-            $report->load(['cooperative:id,name,code', 'creator:id,name', 'approver:id,name']);
+            $report->load(['cooperative:id,name,code,address']);
 
-            // Get related data based on report type
-            $relatedData = $this->getRelatedData($report);
-
-            return view('admin.report-approval.show', compact('report', 'relatedData'));
+            return view('admin.reports.show', compact('report'));
         } catch (\Exception $e) {
-            Log::error('Error loading report approval details', [
+            Log::error('Error loading report details', [
                 'user_id' => auth()->id(),
                 'report_id' => $report->id,
                 'error' => $e->getMessage()
             ]);
 
-            return redirect()->route('admin.report-approval.index')
-                ->with('error', 'Terjadi kesalahan saat memuat detail laporan.');
+            return redirect()->route('admin.reports.approval')
+                ->with('error', 'Gagal memuat detail laporan.');
         }
     }
 
-    public function approve(FinancialReport $report)
+    public function approve(FinancialReport $report): RedirectResponse
     {
         try {
-            if (!$report->canBeApproved()) {
-                return back()->with('error', 'Laporan tidak dapat disetujui.');
-            }
+            // ✅ CRITICAL FIX: Use database transaction
+            return DB::transaction(function () use ($report) {
+                if ($report->status !== 'submitted') {
+                    return redirect()->back()
+                        ->with('error', 'Hanya laporan dengan status "submitted" yang dapat disetujui.');
+                }
 
-            $report->approve(auth()->id());
+                $oldStatus = $report->status;
+                $report->update([
+                    'status' => 'approved',
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now()
+                ]);
 
-            // Send notification
-            $this->notificationService->reportApproved(
-                $report->cooperative_id,
-                $report->report_type,
-                $report->reporting_year
-            );
+                // Create notification for cooperative admin
+                $this->notificationService->createNotification(
+                    $report->created_by,
+                    $report->cooperative_id,
+                    'report_approved',
+                    'Laporan Disetujui',
+                    "Laporan {$report->report_type} tahun {$report->reporting_year} telah disetujui."
+                );
 
-            // Log approval
-            $this->auditLogService->log(
-                'report_approved',
-                'FinancialReport',
-                $report->id,
-                [
-                    'report_type' => $report->report_type,
-                    'reporting_year' => $report->reporting_year,
-                    'cooperative_id' => $report->cooperative_id,
-                ],
-                auth()->id()
-            );
+                $this->auditLogService->log(
+                    'report_approved',
+                    'Laporan keuangan disetujui',
+                    [
+                        'report_id' => $report->id,
+                        'report_type' => $report->report_type,
+                        'reporting_year' => $report->reporting_year,
+                        'cooperative_id' => $report->cooperative_id,
+                        'old_status' => $oldStatus,
+                        'new_status' => 'approved'
+                    ]
+                );
 
-            return back()->with('success', 'Laporan berhasil disetujui.');
+                return redirect()->back()
+                    ->with('success', 'Laporan berhasil disetujui.');
+            });
         } catch (\Exception $e) {
             Log::error('Error approving report', [
                 'user_id' => auth()->id(),
                 'report_id' => $report->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-            return back()->with('error', 'Gagal menyetujui laporan. Silakan coba lagi.');
+            return redirect()->back()
+                ->with('error', 'Gagal menyetujui laporan: ' . $e->getMessage());
         }
     }
 
-    public function reject(Request $request, FinancialReport $report)
+    public function reject(Request $request, FinancialReport $report): RedirectResponse
     {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:1000'
+        ]);
+
         try {
-            if (!$report->canBeApproved()) {
-                return back()->with('error', 'Laporan tidak dapat ditolak.');
-            }
+            // ✅ CRITICAL FIX: Use database transaction
+            return DB::transaction(function () use ($request, $report) {
+                if ($report->status !== 'submitted') {
+                    return redirect()->back()
+                        ->with('error', 'Hanya laporan dengan status "submitted" yang dapat ditolak.');
+                }
 
-            $request->validate([
-                'rejection_reason' => 'required|string|max:1000'
-            ]);
+                $oldStatus = $report->status;
+                $rejectionReason = $request->input('rejection_reason');
 
-            $report->reject(auth()->id(), $request->rejection_reason);
+                $report->update([
+                    'status' => 'rejected',
+                    'rejected_by' => auth()->id(),
+                    'rejected_at' => now(),
+                    'rejection_reason' => $rejectionReason
+                ]);
 
-            // Send notification
-            $this->notificationService->reportRejected(
-                $report->cooperative_id,
-                $report->report_type,
-                $report->reporting_year,
-                $request->rejection_reason
-            );
+                // Create notification for cooperative admin
+                $this->notificationService->createNotification(
+                    $report->created_by,
+                    $report->cooperative_id,
+                    'report_rejected',
+                    'Laporan Ditolak',
+                    "Laporan {$report->report_type} tahun {$report->reporting_year} ditolak. Alasan: {$rejectionReason}"
+                );
 
-            // Log rejection
-            $this->auditLogService->log(
-                'report_rejected',
-                'FinancialReport',
-                $report->id,
-                [
-                    'report_type' => $report->report_type,
-                    'reporting_year' => $report->reporting_year,
-                    'cooperative_id' => $report->cooperative_id,
-                    'rejection_reason' => $request->rejection_reason,
-                ],
-                auth()->id()
-            );
+                $this->auditLogService->log(
+                    'report_rejected',
+                    'Laporan keuangan ditolak',
+                    [
+                        'report_id' => $report->id,
+                        'report_type' => $report->report_type,
+                        'reporting_year' => $report->reporting_year,
+                        'cooperative_id' => $report->cooperative_id,
+                        'old_status' => $oldStatus,
+                        'new_status' => 'rejected',
+                        'rejection_reason' => $rejectionReason
+                    ]
+                );
 
-            return back()->with('success', 'Laporan berhasil ditolak.');
-        } catch (ValidationException $e) {
-            return back()->withErrors($e->errors());
+                return redirect()->back()
+                    ->with('success', 'Laporan berhasil ditolak.');
+            });
         } catch (\Exception $e) {
             Log::error('Error rejecting report', [
                 'user_id' => auth()->id(),
                 'report_id' => $report->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-            return back()->with('error', 'Gagal menolak laporan. Silakan coba lagi.');
+            return redirect()->back()
+                ->with('error', 'Gagal menolak laporan: ' . $e->getMessage());
         }
     }
 
-    public function bulkApprove(Request $request)
+    // ✅ CRITICAL FIX: Bulk operations with proper transactions
+    public function bulkApprove(Request $request): RedirectResponse
     {
+        $request->validate([
+            'report_ids' => 'required|array|min:1',
+            'report_ids.*' => 'exists:financial_reports,id'
+        ]);
+
         try {
-            $request->validate([
-                'report_ids' => 'required|array|min:1',
-                'report_ids.*' => 'exists:financial_reports,id'
-            ]);
+            // ✅ CRITICAL FIX: Use database transaction for bulk operations
+            return DB::transaction(function () use ($request) {
+                $reportIds = $request->input('report_ids');
+                $reports = FinancialReport::whereIn('id', $reportIds)
+                    ->where('status', 'submitted')
+                    ->get();
 
-            $reports = FinancialReport::whereIn('id', $request->report_ids)
-                ->where('status', 'submitted')
-                ->get();
+                if ($reports->isEmpty()) {
+                    return redirect()->back()
+                        ->with('error', 'Tidak ada laporan yang dapat disetujui.');
+                }
 
-            $approvedCount = 0;
-            foreach ($reports as $report) {
-                if ($report->canBeApproved()) {
-                    $report->approve(auth()->id());
+                $approvedCount = 0;
+                foreach ($reports as $report) {
+                    $report->update([
+                        'status' => 'approved',
+                        'approved_by' => auth()->id(),
+                        'approved_at' => now()
+                    ]);
 
-                    // Send notification
-                    $this->notificationService->reportApproved(
+                    // Create notification for each cooperative admin
+                    $this->notificationService->createNotification(
+                        $report->created_by,
                         $report->cooperative_id,
-                        $report->report_type,
-                        $report->reporting_year
+                        'report_approved',
+                        'Laporan Disetujui',
+                        "Laporan {$report->report_type} tahun {$report->reporting_year} telah disetujui."
+                    );
+
+                    $this->auditLogService->log(
+                        'report_approved',
+                        'Laporan keuangan disetujui (bulk)',
+                        [
+                            'report_id' => $report->id,
+                            'report_type' => $report->report_type,
+                            'reporting_year' => $report->reporting_year,
+                            'cooperative_id' => $report->cooperative_id
+                        ]
                     );
 
                     $approvedCount++;
                 }
-            }
 
-            // Log bulk approval
-            $this->auditLogService->log(
-                'reports_bulk_approved',
-                'FinancialReport',
-                null,
-                [
-                    'report_ids' => $request->report_ids,
-                    'approved_count' => $approvedCount,
-                ],
-                auth()->id()
-            );
-
-            return back()->with('success', "{$approvedCount} laporan berhasil disetujui.");
-        } catch (ValidationException $e) {
-            return back()->withErrors($e->errors());
+                return redirect()->back()
+                    ->with('success', "{$approvedCount} laporan berhasil disetujui.");
+            });
         } catch (\Exception $e) {
-            Log::error('Error in bulk approval', [
+            Log::error('Error bulk approving reports', [
                 'user_id' => auth()->id(),
-                'report_ids' => $request->report_ids ?? [],
-                'error' => $e->getMessage()
+                'report_ids' => $request->input('report_ids'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-            return back()->with('error', 'Gagal melakukan persetujuan massal. Silakan coba lagi.');
+            return redirect()->back()
+                ->with('error', 'Gagal menyetujui laporan: ' . $e->getMessage());
         }
     }
 
-    private function getRelatedData(FinancialReport $report): array
+    public function bulkReject(Request $request): RedirectResponse
     {
-        $data = [];
+        $request->validate([
+            'report_ids' => 'required|array|min:1',
+            'report_ids.*' => 'exists:financial_reports,id',
+            'rejection_reason' => 'required|string|max:1000'
+        ]);
 
-        switch ($report->report_type) {
-            case 'balance_sheet':
-                $data['accounts'] = \App\Models\Financial\BalanceSheetAccount::where('cooperative_id', $report->cooperative_id)
-                    ->where('reporting_year', $report->reporting_year)
-                    ->orderBy('sort_order')
-                    ->get()
-                    ->groupBy('account_category');
-                break;
+        try {
+            // ✅ CRITICAL FIX: Use database transaction for bulk operations
+            return DB::transaction(function () use ($request) {
+                $reportIds = $request->input('report_ids');
+                $rejectionReason = $request->input('rejection_reason');
 
-            case 'income_statement':
-                $data['accounts'] = \App\Models\Financial\IncomeStatementAccount::where('cooperative_id', $report->cooperative_id)
-                    ->where('reporting_year', $report->reporting_year)
-                    ->orderBy('sort_order')
-                    ->get()
-                    ->groupBy('account_category');
-                break;
-
-            case 'equity_changes':
-                $data['changes'] = \App\Models\Financial\EquityChange::where('cooperative_id', $report->cooperative_id)
-                    ->where('reporting_year', $report->reporting_year)
-                    ->orderBy('sort_order')
+                $reports = FinancialReport::whereIn('id', $reportIds)
+                    ->where('status', 'submitted')
                     ->get();
-                break;
 
-            case 'member_savings':
-                $data['savings'] = \App\Models\Financial\MemberSaving::where('cooperative_id', $report->cooperative_id)
-                    ->where('reporting_year', $report->reporting_year)
-                    ->orderBy('member_name')
-                    ->get();
-                break;
+                if ($reports->isEmpty()) {
+                    return redirect()->back()
+                        ->with('error', 'Tidak ada laporan yang dapat ditolak.');
+                }
 
-                // Add other report types as needed
+                $rejectedCount = 0;
+                foreach ($reports as $report) {
+                    $report->update([
+                        'status' => 'rejected',
+                        'rejected_by' => auth()->id(),
+                        'rejected_at' => now(),
+                        'rejection_reason' => $rejectionReason
+                    ]);
+
+                    // Create notification for each cooperative admin
+                    $this->notificationService->createNotification(
+                        $report->created_by,
+                        $report->cooperative_id,
+                        'report_rejected',
+                        'Laporan Ditolak',
+                        "Laporan {$report->report_type} tahun {$report->reporting_year} ditolak. Alasan: {$rejectionReason}"
+                    );
+
+                    $this->auditLogService->log(
+                        'report_rejected',
+                        'Laporan keuangan ditolak (bulk)',
+                        [
+                            'report_id' => $report->id,
+                            'report_type' => $report->report_type,
+                            'reporting_year' => $report->reporting_year,
+                            'cooperative_id' => $report->cooperative_id,
+                            'rejection_reason' => $rejectionReason
+                        ]
+                    );
+
+                    $rejectedCount++;
+                }
+
+                return redirect()->back()
+                    ->with('success', "{$rejectedCount} laporan berhasil ditolak.");
+            });
+        } catch (\Exception $e) {
+            Log::error('Error bulk rejecting reports', [
+                'user_id' => auth()->id(),
+                'report_ids' => $request->input('report_ids'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Gagal menolak laporan: ' . $e->getMessage());
         }
-
-        return $data;
     }
 }
