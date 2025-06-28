@@ -101,7 +101,7 @@ simkop/
 │   │   │   │   ├── UserManagementController.php         # ✅ EXISTING
 │   │   │   │   ├── DashboardController.php              # ✅ EXISTING
 │   │   │   │   └── ReportApprovalController.php         # ✅ EXISTING
-│   │   │   ├── Financial/                               # ✅ COMPLETE (11/11)
+│   │   │   ├── Financial/                               # ✅ COMPLETE (12/12)
 │   │   │   │   ├── BaseFinancialController.php          # ✅ EXISTING
 │   │   │   │   ├── BalanceSheetController.php           # ✅ EXISTING
 │   │   │   │   ├── IncomeStatementController.php        # ✅ EXISTING
@@ -114,33 +114,35 @@ simkop/
 │   │   │   │   ├── BudgetPlanController.php             # ✅ EXISTING
 │   │   │   │   └── NotesToFinancialController.php       # ✅ EXISTING
 │   │   │   ├── Reports/                                 # ✅ COMPLETE (3/3)
-│   │   │   │   ├── PDFExportController.php              # ✅ CREATED
-│   │   │   │   ├── ExcelExportController.php            # ✅ CREATED
-│   │   │   │   └── BatchExportController.php            # ✅ CREATED
+│   │   │   │   ├── PDFExportController.php              # ✅ EXISTING
+│   │   │   │   ├── ExcelExportController.php            # ✅ EXISTING
+│   │   │   │   └── BatchExportController.php            # ✅ EXISTING
+│   │   │   ├── Api/                                     # ✅ EXISTING (1/1)
+│   │   │   │   └── NotificationController.php           # ✅ EXISTING
 │   │   │   ├── NotificationController.php               # ✅ EXISTING
 │   │   │   └── DashboardController.php                  # ✅ EXISTING
 │   │   ├── Requests/
 │   │   │   ├── Auth/                                    # ✅ EXISTING (1/1)
 │   │   │   │   └── LoginRequest.php                     # ✅ EXISTING
 │   │   │   ├── ProfileUpdateRequest.php                 # ✅ EXISTING
-│   │   │   ├── Financial/                               # ❌ MISSING (0/9)
-│   │   │   │   ├── BalanceSheetRequest.php              # ❌ TODO
-│   │   │   │   ├── IncomeStatementRequest.php           # ❌ TODO
-│   │   │   │   ├── EquityChangesRequest.php             # ❌ TODO
-│   │   │   │   ├── CashFlowRequest.php                  # ❌ TODO
-│   │   │   │   ├── MemberSavingsRequest.php             # ❌ TODO
-│   │   │   │   ├── MemberReceivablesRequest.php         # ❌ TODO
-│   │   │   │   ├── NPLReceivablesRequest.php            # ❌ TODO
-│   │   │   │   ├── SHUDistributionRequest.php           # ❌ TODO
-│   │   │   │   └── BudgetPlanRequest.php                # ❌ TODO
-│   │   │   ├── Admin/                                   # ❌ MISSING (0/2)
-│   │   │   │   ├── CooperativeRequest.php               # ❌ TODO
-│   │   │   │   └── UserManagementRequest.php            # ❌ TODO
-│   │   │   └── NotificationRequest.php                  # ❌ TODO
-│   │   ├── Middleware/                                  # ❌ MISSING (0/3)
-│   │   │   ├── FinancialAuditMiddleware.php             # ❌ TODO
-│   │   │   ├── RoleMiddleware.php                       # ❌ TODO
-│   │   │   └── CooperativeAccessMiddleware.php          # ❌ TODO
+│   │   │   ├── Financial/                               # ✅ COMPLETE (9/9)
+│   │   │   │   ├── BalanceSheetRequest.php              # ✅ EXISTING
+│   │   │   │   ├── IncomeStatementRequest.php           # ✅ EXISTING
+│   │   │   │   ├── EquityChangesRequest.php             # ✅ EXISTING
+│   │   │   │   ├── CashFlowRequest.php                  # ✅ EXISTING
+│   │   │   │   ├── MemberSavingsRequest.php             # ✅ EXISTING
+│   │   │   │   ├── MemberReceivablesRequest.php         # ✅ EXISTING
+│   │   │   │   ├── NPLReceivablesRequest.php            # ✅ EXISTING
+│   │   │   │   ├── SHUDistributionRequest.php           # ✅ EXISTING
+│   │   │   │   └── BudgetPlanRequest.php                # ✅ EXISTING
+│   │   │   ├── Admin/                                   # ✅ COMPLETE (2/2)
+│   │   │   │   ├── CooperativeRequest.php               # ✅ EXISTING
+│   │   │   │   └── UserManagementRequest.php            # ✅ EXISTING
+│   │   │   └── NotificationRequest.php                  # ✅ EXISTING
+│   │   ├── Middleware/                                  # ✅ COMPLETE (3/3)
+│   │   │   ├── FinancialAuditMiddleware.php             # ✅ EXISTING
+│   │   │   ├── RoleMiddleware.php                       # ✅ EXISTING
+│   │   │   └── CooperativeAccessMiddleware.php          # ✅ EXISTING
 │   │   └── Resources/                                   # ❌ MISSING (0/11+)
 │   │       ├── Financial/                               # ❌ TODO
 │   │       │   ├── BalanceSheetResource.php             # ❌ TODO
@@ -166,23 +168,27 @@ simkop/
 │   ├── Traits/                                          # ✅ COMPLETE (2/2)
 │   │   ├── HasAuditLog.php                              # ✅ EXISTING
 │   │   └── BelongsToCooperative.php                     # ✅ EXISTING
-│   ├── Services/                                        # ⚠️ PARTIAL (5/13)
-│   │   ├── Financial/                                   # ⚠️ PARTIAL (3/7)
-│   │   │   ├── BaseFinancialController.php              # ⚠️ WRONG LOCATION (should be in Controllers/)
-│   │   │   ├── ReportGenerationService.php              # ❌ TODO
-│   │   │   ├── FinancialValidationService.php           # ❌ TODO
+│   ├── Services/                                        # ✅ COMPLETE (13/13)
+│   │   ├── Financial/                                   # ✅ COMPLETE (7/7)
+│   │   │   ├── ReportGenerationService.php              # ✅ EXISTING
+│   │   │   ├── FinancialValidationService.php           # ✅ EXISTING
 │   │   │   ├── BalanceSheetService.php                  # ✅ EXISTING
-│   │   │   ├── IncomeStatementService.php               # ✅ EXISTING (stub)
-│   │   │   ├── EquityChangesService.php                 # ❌ TODO
-│   │   │   ├── CashFlowService.php                      # ❌ TODO
-│   │   │   └── YearOverYearComparisonService.php        # ❌ TODO
-│   │   ├── Export/                                      # ❌ MISSING (0/3)
-│   │   │   ├── PDFExportService.php                     # ❌ TODO
-│   │   │   ├── ExcelExportService.php                   # ❌ TODO
-│   │   │   └── BatchExportService.php                   # ❌ TODO
+│   │   │   ├── IncomeStatementService.php               # ✅ EXISTING
+│   │   │   ├── EquityChangesService.php                 # ✅ EXISTING
+│   │   │   ├── CashFlowService.php                      # ✅ EXISTING
+│   │   │   └── YearOverYearComparisonService.php        # ✅ EXISTING
+│   │   ├── Export/                                      # ✅ COMPLETE (3/3)
+│   │   │   ├── PDFExportService.php                     # ✅ EXISTING
+│   │   │   ├── ExcelExportService.php                   # ✅ EXISTING
+│   │   │   └── BatchExportService.php                   # ✅ EXISTING
 │   │   ├── NotificationService.php                      # ✅ EXISTING
 │   │   ├── AuditLogService.php                          # ✅ EXISTING
-│   │   └── DashboardAnalyticsService.php                # ❌ TODO
+│   │   └── DashboardAnalyticsService.php                # ✅ EXISTING
+│   ├── Console/                                         # ✅ EXISTING
+│   │   └── Commands/                                    # ✅ EXISTING
+│   │       └── CleanupNotifications.php                 # ✅ EXISTING
+│   ├── Listeners/                                       # ✅ EXISTING
+│   │   └── NotificationEventSubscriber.php              # ✅ EXISTING
 │   ├── Observers/                                       # ❌ MISSING (0/2)
 │   │   ├── FinancialReportObserver.php                  # ❌ TODO
 │   │   └── UserObserver.php                             # ❌ TODO
@@ -199,7 +205,7 @@ simkop/
 │       ├── AuthServiceProvider.php                      # ✅ EXISTING
 │       └── EventServiceProvider.php                     # ✅ EXISTING
 ├── database/                                            # ✅ COMPLETE
-│   ├── migrations/                                      # ✅ ALL EXISTING
+│   ├── migrations/                                      # ✅ ALL EXISTING (15/15)
 │   │   ├── 0001_01_01_000000_create_users_table.php    # ✅ EXISTING
 │   │   ├── 0001_01_01_000001_create_cache_table.php    # ✅ EXISTING
 │   │   ├── 0001_01_01_000002_create_jobs_table.php     # ✅ EXISTING
@@ -219,7 +225,7 @@ simkop/
 │   │   ├── 2025_06_28_000013_create_shu_distribution_table.php # ✅ EXISTING
 │   │   ├── 2025_06_28_000014_create_budget_plans_table.php # ✅ EXISTING
 │   │   └── 2025_06_28_000015_create_indexes.php         # ✅ EXISTING
-│   ├── seeders/                                         # ✅ EXISTING
+│   ├── seeders/                                         # ✅ EXISTING (5/5)
 │   │   ├── DatabaseSeeder.php                           # ✅ EXISTING
 │   │   ├── AdminDinasSeeder.php                         # ✅ EXISTING
 │   │   ├── RolePermissionSeeder.php                     # ✅ EXISTING
@@ -230,24 +236,52 @@ simkop/
 │       └── Financial/                                   # ✅ EXISTING
 │           ├── BalanceSheetAccountFactory.php           # ✅ EXISTING
 │           └── [other factories for testing]            # ✅ EXISTING
-├── resources/                                           # ❌ VIEWS MISSING
-│   ├── views/                                           # ❌ TODO (30+ files)
+├── resources/                                           # ❌ VIEWS MISSING (0/50+)
+│   ├── views/                                           # ❌ TODO (50+ files)
 │   │   ├── layouts/                                     # ❌ TODO
+│   │   │   ├── app.blade.php                            # ❌ TODO
+│   │   │   ├── guest.blade.php                          # ❌ TODO
+│   │   │   └── navigation.blade.php                     # ❌ TODO
 │   │   ├── dashboard/                                   # ❌ TODO
+│   │   │   ├── admin-dinas.blade.php                    # ❌ TODO
+│   │   │   └── admin-koperasi.blade.php                 # ❌ TODO
 │   │   ├── admin/                                       # ❌ TODO
+│   │   │   ├── cooperatives/                            # ❌ TODO (4 files)
+│   │   │   ├── users/                                   # ❌ TODO (3 files)
+│   │   │   └── reports/                                 # ❌ TODO (2 files)
 │   │   ├── financial/                                   # ❌ TODO
+│   │   │   ├── balance-sheet/                           # ❌ TODO (5 files)
+│   │   │   ├── income-statement/                        # ❌ TODO (5 files)
+│   │   │   ├── equity-changes/                          # ❌ TODO (5 files)
+│   │   │   ├── cash-flow/                               # ❌ TODO (5 files)
+│   │   │   ├── member-savings/                          # ❌ TODO (5 files)
+│   │   │   ├── member-receivables/                      # ❌ TODO (5 files)
+│   │   │   ├── npl-receivables/                         # ❌ TODO (5 files)
+│   │   │   ├── shu-distribution/                        # ❌ TODO (5 files)
+│   │   │   ├── budget-plan/                             # ❌ TODO (5 files)
+│   │   │   └── notes/                                   # ❌ TODO (5 files)
 │   │   ├── reports/                                     # ❌ TODO
-│   │   ├── notifications/                               # ❌ TODO
-│   │   └── components/                                  # ❌ TODO
+│   │   │   ├── pdf/                                     # ❌ TODO (11 files)
+│   │   │   ├── export/                                  # ❌ TODO (2 files)
+│   │   │   └── preview/                                 # ❌ TODO (10 files)
+│   │   ├── notifications/                               # ❌ TODO (3 files)
+│   │   ├── components/                                  # ❌ TODO (12 files)
+│   │   └── auth/                                        # ✅ EXISTING (Laravel Breeze)
 │   ├── css/                                             # ❌ TODO
+│   │   ├── app.css                                      # ❌ TODO
+│   │   └── financial-forms.css                          # ❌ TODO
 │   └── js/                                              # ❌ TODO
+│       ├── app.js                                       # ❌ TODO
+│       ├── financial-forms.js                           # ❌ TODO
+│       ├── notifications.js                             # ❌ TODO
+│       └── dashboard-charts.js                          # ❌ TODO
 ├── routes/                                              # ⚠️ PARTIAL
 │   ├── web.php                                          # ⚠️ NEEDS ENHANCEMENT
 │   ├── auth.php                                         # ✅ EXISTING
 │   └── api.php                                          # ⚠️ NEEDS ENHANCEMENT
 ├── config/                                              # ✅ EXISTING
 ├── storage/                                             # ✅ EXISTING
-├── tests/                                               # ❌ MISSING (20+ files)
+├── tests/                                               # ❌ MISSING (30+ files)
 ├── docs/                                                # ✅ EXISTING
 │   ├── SAD.md                                           # ✅ EXISTING
 │   ├── SRS.md                                           # ✅ EXISTING
@@ -256,7 +290,7 @@ simkop/
 ├── composer.json                                        # ✅ EXISTING
 ├── package.json                                         # ✅ EXISTING
 ├── artisan                                              # ✅ EXISTING
-└── README.md                                            # ✅ THIS FILE
+└── README.md                                            # ✅ EXISTING
 ```
 
 ## Instalasi
